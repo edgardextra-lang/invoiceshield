@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>InvoiceShield | Know If You'll Get Paid</title>
+<meta name="description" content="Client payment risk intelligence for freelancers, contractors, and agencies. Know if a client will pay before you send the invoice.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='20' height='24' rx='3' fill='%23F5F0E8' stroke='%232D2A26' stroke-width='2'/%3E%3Cpath d='M8 11h10M8 15h7M8 19h5' stroke='%23C8A35F' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='24' cy='10' r='7' fill='%238BA888' stroke='%232D2A26' stroke-width='2'/%3E%3Cpath d='M21.5 10l2 2L27 8.5' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ========== RESET & BASE ========== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --beige: #F5F0E8;
+  --beige-light: #FAF8F4;
+  --beige-dark: #EDE6D8;
+  --charcoal: #2D2A26;
+  --charcoal-light: #4A4640;
+  --charcoal-muted: #7A766F;
+  --gold: #C8A35F;
+  --gold-light: #D4B577;
+  --gold-dark: #A8874A;
+  --sage: #8BA888;
+  --sage-light: #A3BDA0;
+  --sage-dark: #6F8E6C;
+  --espresso: #4A3728;
+  --espresso-light: #6B5340;
+  --cream: #FDFCFA;
+  --red: #B4503C;
+  --red-light: rgba(180,80,60,0.12);
+  --green-light: rgba(139,168,136,0.12);
+  --gold-light-bg: rgba(200,163,95,0.12);
+  --font-display: 'Calistoga', serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --shadow-sm: 0 2px 8px rgba(45,42,38,0.06);
+  --shadow-md: 0 8px 24px rgba(45,42,38,0.08);
+  --shadow-lg: 0 16px 48px rgba(45,42,38,0.12);
+  --shadow-gold: 0 8px 32px rgba(200,163,95,0.25);
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms ease;
+}
+
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: var(--font-body);
+  color: var(--charcoal);
+  background: var(--beige);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+button { cursor: pointer; border: none; font-family: inherit; }
+
+/* ========== UTILITIES ========== */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.text-gold { color: var(--gold); }
+.text-sage { color: var(--sage-dark); }
+
+/* ========== REVEAL ANIMATIONS ========== */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+.reveal-left {
+  opacity: 0; transform: translateX(-40px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-left.visible { opacity: 1; transform: translateX(0); }
+.reveal-right {
+  opacity: 0; transform: translateX(40px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-right.visible { opacity: 1; transform: translateX(0); }
+.reveal-scale {
+  opacity: 0; transform: scale(0.9);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-scale.visible { opacity: 1; transform: scale(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-left, .reveal-right, .reveal-scale { opacity: 1; transform: none; transition: none; }
+  .float-animation, .pulse-ring, .wave-line { animation: none !important; }
+}
+
+/* ========== NAVIGATION ========== */
+.navbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  padding: 16px 0;
+  transition: background var(--transition-base), box-shadow var(--transition-base), padding var(--transition-base);
+}
+.navbar.scrolled {
+  background: rgba(245, 240, 232, 0.92);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 1px 0 rgba(45,42,38,0.08); padding: 12px 0;
+}
+.navbar .container { display: flex; align-items: center; justify-content: space-between; }
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-display); font-size: 1.25rem; color: var(--charcoal);
+}
+.nav-logo svg { flex-shrink: 0; }
+.nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+.nav-links a {
+  font-size: 0.9rem; font-weight: 500; color: var(--charcoal-light);
+  transition: color var(--transition-fast); position: relative;
+}
+.nav-links a::after {
+  content: ''; position: absolute; bottom: -4px; left: 0;
+  width: 0; height: 2px; background: var(--gold);
+  transition: width var(--transition-base); border-radius: 1px;
+}
+.nav-links a:hover { color: var(--charcoal); }
+.nav-links a:hover::after { width: 100%; }
+.nav-links a.nav-cta {
+  background: var(--charcoal); color: #FFFFFF;
+  padding: 10px 24px; border-radius: 100px;
+  font-size: 0.875rem; font-weight: 600;
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.nav-links a.nav-cta:hover {
+  background: var(--espresso); color: #FFFFFF;
+  transform: translateY(-1px); box-shadow: var(--shadow-md);
+}
+.nav-toggle { display: none; background: none; padding: 8px; }
+.nav-toggle span {
+  display: block; width: 24px; height: 2px;
+  background: var(--charcoal); border-radius: 2px;
+  transition: var(--transition-fast);
+}
+.nav-toggle span + span { margin-top: 6px; }
+
+/* ========== HERO ========== */
+.hero {
+  position: relative; min-height: 100vh;
+  display: flex; align-items: center;
+  padding: 120px 0 80px; overflow: hidden;
+}
+.hero-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
+}
+.hero .container {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 64px; align-items: center;
+}
+.hero-content { max-width: 560px; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(200,163,95,0.12); border: 1px solid rgba(200,163,95,0.25);
+  padding: 6px 16px; border-radius: 100px;
+  font-size: 0.8rem; font-weight: 600; color: var(--gold-dark);
+  margin-bottom: 24px; letter-spacing: 0.03em;
+}
+.hero-badge-dot {
+  width: 6px; height: 6px; background: var(--gold);
+  border-radius: 50%; animation: pulse-dot 2s ease infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
+}
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 4.5vw, 3.5rem);
+  line-height: 1.15; color: var(--charcoal); margin-bottom: 24px;
+}
+.hero h1 span {
+  display: inline;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hero-sub {
+  font-size: 1.1rem; line-height: 1.7; color: var(--charcoal-light);
+  margin-bottom: 40px; max-width: 480px;
+}
+.hero-actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--charcoal); color: var(--beige-light);
+  padding: 16px 32px; border-radius: 100px;
+  font-size: 1rem; font-weight: 600;
+  transition: all var(--transition-base);
+  position: relative; overflow: hidden;
+}
+.btn-primary::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  opacity: 0; transition: opacity var(--transition-base);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.btn-primary:hover::before { opacity: 1; }
+.btn-primary span { position: relative; z-index: 1; }
+.btn-primary svg { position: relative; z-index: 1; transition: transform var(--transition-fast); }
+.btn-primary:hover svg { transform: translateX(3px); }
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: transparent; color: var(--charcoal);
+  padding: 16px 28px; border-radius: 100px;
+  font-size: 1rem; font-weight: 500;
+  border: 1.5px solid rgba(45,42,38,0.2);
+  transition: all var(--transition-base);
+}
+.btn-secondary:hover { border-color: var(--gold); color: var(--gold-dark); transform: translateY(-1px); }
+.hero-social-proof { display: flex; align-items: center; gap: 12px; margin-top: 40px; }
+.hero-avatars { display: flex; }
+.hero-avatars .avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 2.5px solid var(--beige); margin-left: -10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700; color: var(--cream);
+}
+.hero-avatars .avatar:first-child { margin-left: 0; }
+.hero-social-proof p { font-size: 0.85rem; color: var(--charcoal-light); }
+.hero-social-proof strong { color: var(--charcoal); font-weight: 600; }
+
+/* Hero Risk Report Mockup */
+.hero-visual { position: relative; display: flex; justify-content: center; align-items: center; }
+.mockup-container { position: relative; width: 100%; max-width: 520px; }
+.risk-mockup {
+  background: var(--cream); border-radius: var(--radius-lg);
+  padding: 28px; box-shadow: var(--shadow-lg);
+  position: relative; z-index: 2;
+  border: 1px solid rgba(45,42,38,0.06);
+}
+.risk-mockup-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; padding-bottom: 16px;
+  border-bottom: 1px solid rgba(45,42,38,0.06);
+}
+.risk-mockup-title { font-family: var(--font-display); font-size: 0.95rem; }
+.risk-mockup-badge {
+  font-size: 0.65rem; font-weight: 700; padding: 4px 10px;
+  border-radius: 100px; letter-spacing: 0.03em;
+}
+.risk-mockup-badge.high { background: var(--red-light); color: var(--red); }
+.risk-mockup-badge.medium { background: var(--gold-light-bg); color: var(--gold-dark); }
+.risk-mockup-badge.low { background: var(--green-light); color: var(--sage-dark); }
+.risk-score-area { display: flex; gap: 24px; align-items: center; margin-bottom: 20px; }
+.risk-gauge { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
+.risk-gauge svg { width: 100%; height: 100%; }
+.risk-meta { flex: 1; }
+.risk-meta-client { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; }
+.risk-meta-email { font-size: 0.75rem; color: var(--charcoal-muted); margin-bottom: 8px; }
+.risk-meta-prob { font-size: 0.8rem; color: var(--charcoal-light); }
+.risk-meta-prob strong { color: var(--red); }
+.risk-signals { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.risk-signal {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; background: var(--beige-light);
+  border-radius: 6px; font-size: 0.72rem;
+}
+.risk-signal-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.risk-signal-dot.high { background: var(--red); }
+.risk-signal-dot.medium { background: var(--gold); }
+.risk-signal-dot.low { background: var(--sage); }
+.risk-signal-text { flex: 1; color: var(--charcoal-light); }
+.risk-signal-pts { font-weight: 700; font-size: 0.65rem; color: var(--charcoal-muted); }
+.risk-recommend {
+  background: rgba(139,168,136,0.08); border: 1px solid rgba(139,168,136,0.2);
+  border-radius: 8px; padding: 12px 14px;
+}
+.risk-recommend-title { font-size: 0.7rem; font-weight: 700; color: var(--sage-dark); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.risk-recommend-items { display: flex; flex-direction: column; gap: 3px; }
+.risk-recommend-item { font-size: 0.75rem; color: var(--charcoal-light); display: flex; align-items: center; gap: 6px; }
+.risk-recommend-item svg { flex-shrink: 0; }
+
+/* Floating cards */
+.float-notification {
+  position: absolute; z-index: 3;
+  background: var(--cream); border-radius: var(--radius-md);
+  padding: 14px 18px; box-shadow: var(--shadow-md);
+  border: 1px solid rgba(45,42,38,0.06);
+  animation: float-up-down 4s ease-in-out infinite;
+}
+.float-notification.top-right { top: -20px; right: -30px; }
+.float-notification.bottom-left { bottom: -10px; left: -30px; animation-delay: -2s; }
+.float-notif-row { display: flex; align-items: center; gap: 10px; }
+.float-notif-icon {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.float-notif-icon.green { background: rgba(139,168,136,0.15); color: var(--sage-dark); }
+.float-notif-icon.red { background: rgba(180,80,60,0.12); color: var(--red); }
+.float-notif-text { font-size: 0.8rem; font-weight: 600; }
+.float-notif-sub { font-size: 0.7rem; color: var(--charcoal-light); }
+
+@keyframes float-up-down {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+/* ========== PAIN SECTION ========== */
+.pain-section { padding: 100px 0; background: var(--charcoal); position: relative; overflow: hidden; }
+.pain-section::before {
+  content: ''; position: absolute; top: -80px; left: 0; right: 0; height: 80px;
+  background: var(--beige); clip-path: ellipse(60% 100% at 50% 0%);
+}
+.pain-section::after {
+  content: ''; position: absolute; bottom: -80px; left: 0; right: 0; height: 80px;
+  background: var(--charcoal); clip-path: ellipse(60% 100% at 50% 100%); z-index: 1;
+}
+.pain-header { text-align: center; margin-bottom: 48px; }
+.pain-header h2 {
+  font-family: var(--font-display); font-size: clamp(1.75rem, 3vw, 2.5rem);
+  color: var(--beige); margin-bottom: 16px;
+}
+.pain-header p { color: rgba(245,240,232,0.5); font-size: 1rem; max-width: 520px; margin: 0 auto; line-height: 1.7; }
+.pain-steps {
+  display: flex; flex-direction: column; gap: 0;
+  max-width: 600px; margin: 0 auto 56px; position: relative;
+}
+.pain-step {
+  display: flex; align-items: center; gap: 16px; padding: 16px 0;
+  position: relative;
+}
+.pain-step-num {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 0.85rem; flex-shrink: 0;
+  color: var(--cream);
+}
+.pain-step-num.dim { background: rgba(245,240,232,0.08); color: rgba(245,240,232,0.4); }
+.pain-step-num.red { background: var(--red); }
+.pain-step-text { font-size: 1rem; color: rgba(245,240,232,0.6); line-height: 1.5; }
+.pain-step-text.dim { color: rgba(245,240,232,0.35); }
+.pain-step-text strong { color: var(--beige); }
+.pain-connector {
+  width: 2px; height: 16px; background: rgba(245,240,232,0.08);
+  margin-left: 17px;
+}
+
+.stats-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
+}
+.stat-card {
+  text-align: center; padding: 40px 24px; border-radius: var(--radius-lg);
+  background: rgba(245,240,232,0.05); border: 1px solid rgba(245,240,232,0.08);
+  transition: transform var(--transition-base), background var(--transition-base);
+}
+.stat-card:hover { transform: translateY(-4px); background: rgba(245,240,232,0.08); }
+.stat-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+}
+.stat-icon.gold-icon { background: rgba(200,163,95,0.15); color: var(--gold); }
+.stat-icon.sage-icon { background: rgba(139,168,136,0.15); color: var(--sage); }
+.stat-icon.red-icon { background: rgba(180,80,60,0.15); color: #E07058; }
+.stat-number {
+  font-family: var(--font-display); font-size: clamp(2.5rem, 4vw, 3.5rem);
+  color: var(--beige); line-height: 1; margin-bottom: 8px;
+}
+.stat-label {
+  font-size: 0.95rem; color: rgba(245,240,232,0.6);
+  max-width: 220px; margin: 0 auto; line-height: 1.5;
+}
+
+/* ========== HOW IT WORKS ========== */
+.how-section { padding: 120px 0 100px; background: var(--beige-light); position: relative; }
+.section-label {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 0.8rem; font-weight: 700; color: var(--gold-dark);
+  letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 16px;
+}
+.section-label-line { width: 32px; height: 2px; background: var(--gold); border-radius: 1px; }
+.section-title {
+  font-family: var(--font-display); font-size: clamp(1.75rem, 3vw, 2.5rem);
+  color: var(--charcoal); margin-bottom: 16px;
+}
+.section-sub { font-size: 1.05rem; color: var(--charcoal-light); max-width: 520px; line-height: 1.7; }
+.how-header { text-align: center; margin-bottom: 72px; }
+.how-header .section-sub { margin: 0 auto; }
+.how-steps {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; position: relative;
+}
+.how-steps::before {
+  content: ''; position: absolute; top: 28px; left: calc(16.66%); right: calc(16.66%);
+  height: 2px; background: linear-gradient(90deg, var(--gold), var(--sage)); z-index: 0;
+}
+.step-card { text-align: center; position: relative; z-index: 1; }
+.step-number {
+  width: 56px; height: 56px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 1.25rem;
+  margin: 0 auto 28px; color: var(--cream); position: relative;
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+.step-card:hover .step-number { transform: scale(1.1); box-shadow: var(--shadow-gold); }
+.step-1 .step-number { background: var(--gold); }
+.step-2 .step-number { background: var(--espresso); }
+.step-3 .step-number { background: var(--sage-dark); }
+.step-icon-area {
+  width: 120px; height: 120px; border-radius: var(--radius-lg);
+  background: var(--cream); display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 24px; box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(45,42,38,0.04);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+.step-card:hover .step-icon-area { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.step-card h3 { font-family: var(--font-display); font-size: 1.25rem; margin-bottom: 12px; }
+.step-card p { font-size: 0.9rem; color: var(--charcoal-light); line-height: 1.6; max-width: 280px; margin: 0 auto; }
+
+/* ========== FEATURES (WHAT YOU GET) ========== */
+.features-section { padding: 100px 0; background: var(--beige); }
+.features-header { text-align: center; margin-bottom: 80px; }
+.features-header .section-sub { margin: 0 auto; }
+.feature-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 64px;
+  align-items: center; margin-bottom: 80px;
+}
+.feature-row:last-child { margin-bottom: 0; }
+.feature-row.reverse .feature-text { order: 2; }
+.feature-row.reverse .feature-visual { order: 1; }
+.feature-text { max-width: 440px; }
+.feature-row.reverse .feature-text { margin-left: auto; }
+.feature-icon {
+  width: 48px; height: 48px; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+}
+.feature-icon.gold-bg { background: rgba(200,163,95,0.12); color: var(--gold-dark); }
+.feature-icon.sage-bg { background: rgba(139,168,136,0.12); color: var(--sage-dark); }
+.feature-icon.espresso-bg { background: rgba(74,55,40,0.1); color: var(--espresso); }
+.feature-icon.red-bg { background: rgba(180,80,60,0.1); color: var(--red); }
+.feature-icon.charcoal-bg { background: rgba(45,42,38,0.08); color: var(--charcoal); }
+.feature-text h3 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 12px; }
+.feature-text p { font-size: 0.9rem; color: var(--charcoal-light); line-height: 1.7; margin-bottom: 16px; }
+.feature-tag {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 4px;
+  font-size: 0.75rem; font-weight: 600; color: var(--gold-dark);
+  background: rgba(200,163,95,0.1); padding: 4px 12px; border-radius: 100px;
+}
+.feature-visual { position: relative; perspective: 1200px; }
+.feature-mockup {
+  background: var(--cream); border-radius: 12px;
+  border: 1px solid rgba(45,42,38,0.08);
+  box-shadow: 0 20px 60px rgba(45,42,38,0.1), 0 1px 3px rgba(45,42,38,0.06);
+  overflow: hidden;
+  transform: rotateY(-2deg) rotateX(1deg);
+  transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 500ms ease;
+}
+.feature-row.reverse .feature-mockup { transform: rotateY(2deg) rotateX(1deg); }
+.feature-mockup:hover {
+  transform: rotateY(0) rotateX(0) translateY(-4px);
+  box-shadow: 0 32px 80px rgba(45,42,38,0.14), 0 2px 6px rgba(45,42,38,0.06);
+}
+.mockup-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 14px; background: var(--charcoal); border-radius: 12px 12px 0 0;
+}
+.mockup-dot { width: 8px; height: 8px; border-radius: 50%; }
+.mockup-dot.r { background: #E55A50; }
+.mockup-dot.y { background: #F5C142; }
+.mockup-dot.g { background: #5DC05D; }
+.mockup-url {
+  flex: 1; text-align: center; font-size: 0.55rem;
+  color: rgba(245,240,232,0.35); letter-spacing: 0.03em;
+}
+.mockup-body { padding: 16px; font-size: 0.65rem; }
+
+/* ========== DIFFERENTIATION ========== */
+.diff-section { padding: 100px 0; background: var(--beige-light); }
+.diff-header { text-align: center; margin-bottom: 64px; }
+.diff-header .section-sub { margin: 0 auto; }
+.diff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 900px; margin: 0 auto; }
+.diff-card {
+  padding: 40px 32px; border-radius: var(--radius-lg);
+  border: 1.5px solid rgba(45,42,38,0.08);
+}
+.diff-card.old { background: rgba(180,80,60,0.03); border-color: rgba(180,80,60,0.15); }
+.diff-card.new { background: rgba(139,168,136,0.05); border-color: rgba(139,168,136,0.25); }
+.diff-card-label {
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; margin-bottom: 20px;
+}
+.diff-card.old .diff-card-label { color: var(--red); }
+.diff-card.new .diff-card-label { color: var(--sage-dark); }
+.diff-card ul { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.diff-card li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 0.9rem; color: var(--charcoal-light); line-height: 1.5;
+}
+.diff-card li svg { flex-shrink: 0; margin-top: 3px; }
+.diff-quote {
+  text-align: center; margin-top: 48px; max-width: 700px; margin-left: auto; margin-right: auto;
+  font-family: var(--font-display); font-size: 1.15rem; color: var(--charcoal);
+  line-height: 1.6; padding: 32px;
+  background: var(--cream); border-radius: var(--radius-lg);
+  border: 1px solid rgba(200,163,95,0.2);
+}
+.diff-quote .text-gold { font-size: 1.3rem; }
+
+/* ========== PRICING ========== */
+.pricing-section { padding: 100px 0; background: var(--beige); }
+.pricing-header { text-align: center; margin-bottom: 64px; }
+.pricing-header .section-sub { margin: 0 auto; }
+.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: start; }
+.pricing-card {
+  padding: 40px 32px; border-radius: var(--radius-lg);
+  background: var(--cream); border: 1.5px solid rgba(45,42,38,0.08);
+  position: relative;
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+.pricing-card:hover { transform: translateY(-4px); }
+.pricing-card.featured { border-color: var(--gold); box-shadow: var(--shadow-gold); transform: scale(1.02); }
+.pricing-card.featured:hover { transform: scale(1.02) translateY(-4px); }
+.pricing-badge {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: var(--cream); font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 6px 20px; border-radius: 100px; white-space: nowrap;
+}
+.pricing-tier {
+  font-size: 0.85rem; font-weight: 700; color: var(--gold-dark);
+  letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px;
+}
+.pricing-name { font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 8px; }
+.pricing-price { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
+.pricing-price .amount { font-family: var(--font-display); font-size: 2.5rem; }
+.pricing-price .period { font-size: 0.9rem; color: var(--charcoal-light); }
+.pricing-desc { font-size: 0.85rem; color: var(--charcoal-light); margin-bottom: 28px; line-height: 1.5; }
+.pricing-features { list-style: none; margin-bottom: 32px; }
+.pricing-features li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 0.875rem; padding: 8px 0; color: var(--charcoal-light);
+}
+.pricing-features li svg { flex-shrink: 0; margin-top: 2px; }
+.pricing-btn {
+  display: block; width: 100%; text-align: center;
+  padding: 14px; border-radius: 100px;
+  font-weight: 600; font-size: 0.9rem;
+  transition: all var(--transition-base);
+}
+.pricing-btn.primary { background: var(--charcoal); color: var(--beige-light); }
+.pricing-btn.primary:hover { background: var(--espresso); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.pricing-btn.outline { background: transparent; color: var(--charcoal); border: 1.5px solid rgba(45,42,38,0.15); }
+.pricing-btn.outline:hover { border-color: var(--gold); color: var(--gold-dark); transform: translateY(-1px); }
+
+/* ========== TESTIMONIALS ========== */
+.testimonials-section { padding: 100px 0; background: var(--beige-light); }
+.testimonials-header { text-align: center; margin-bottom: 64px; }
+.testimonials-header .section-sub { margin: 0 auto; }
+.testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.testimonial-card {
+  padding: 32px; border-radius: var(--radius-lg);
+  background: var(--cream); border: 1px solid rgba(45,42,38,0.05);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+.testimonial-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.testimonial-stars { display: flex; gap: 2px; margin-bottom: 16px; color: var(--gold); }
+.testimonial-text {
+  font-size: 0.95rem; line-height: 1.7; color: var(--charcoal-light);
+  margin-bottom: 20px; font-style: italic;
+}
+.testimonial-author { display: flex; align-items: center; gap: 12px; }
+.testimonial-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.85rem; color: var(--cream);
+}
+.testimonial-name { font-weight: 600; font-size: 0.9rem; }
+.testimonial-role { font-size: 0.8rem; color: var(--charcoal-light); }
+
+/* ========== FAQ ========== */
+.faq-section { padding: 100px 0; background: var(--beige); }
+.faq-header { text-align: center; margin-bottom: 56px; }
+.faq-header .section-sub { margin: 0 auto; }
+.faq-list { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+.faq-item {
+  border-radius: var(--radius-md); background: var(--cream);
+  border: 1px solid rgba(45,42,38,0.06); overflow: hidden;
+  transition: box-shadow var(--transition-base);
+}
+.faq-item:hover { box-shadow: var(--shadow-sm); }
+.faq-question {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px; font-size: 0.95rem; font-weight: 600;
+  color: var(--charcoal); background: none; text-align: left;
+  cursor: pointer; transition: color var(--transition-fast);
+}
+.faq-question:hover { color: var(--gold-dark); }
+.faq-chevron { flex-shrink: 0; transition: transform var(--transition-base); color: var(--charcoal-light); }
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+.faq-answer {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.faq-item.open .faq-answer { max-height: 300px; }
+.faq-answer-inner { padding: 0 24px 20px; font-size: 0.9rem; color: var(--charcoal-light); line-height: 1.7; }
+
+/* ========== FINAL CTA ========== */
+.final-cta {
+  padding: 100px 0; background: var(--charcoal);
+  position: relative; overflow: hidden;
+}
+.final-cta::before {
+  content: ''; position: absolute; top: -2px; left: 0; right: 0;
+  height: 80px; background: var(--beige);
+  clip-path: ellipse(55% 100% at 50% 0%);
+}
+.final-cta-content { text-align: center; position: relative; z-index: 1; }
+.final-cta h2 {
+  font-family: var(--font-display); font-size: clamp(2rem, 3.5vw, 3rem);
+  color: var(--beige); margin-bottom: 16px;
+}
+.final-cta p {
+  font-size: 1.1rem; color: rgba(245,240,232,0.6);
+  max-width: 500px; margin: 0 auto 40px; line-height: 1.6;
+}
+.email-form { display: flex; max-width: 480px; margin: 0 auto; gap: 12px; }
+.email-form input {
+  flex: 1; padding: 16px 24px; border-radius: 100px;
+  border: 1.5px solid rgba(245,240,232,0.15);
+  background: rgba(245,240,232,0.06); color: var(--beige);
+  font-family: var(--font-body); font-size: 0.95rem; outline: none;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.email-form input::placeholder { color: rgba(245,240,232,0.35); }
+.email-form input:focus { border-color: var(--gold); background: rgba(245,240,232,0.08); }
+.email-form button {
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: var(--charcoal); padding: 16px 32px; border-radius: 100px;
+  font-weight: 700; font-size: 0.9rem; white-space: nowrap;
+  transition: all var(--transition-base);
+}
+.email-form button:hover { transform: translateY(-2px); box-shadow: var(--shadow-gold); }
+.final-cta p.final-cta-note {
+  font-size: 0.7rem; color: rgba(245,240,232,0.35);
+  margin: 28px auto 0; letter-spacing: 0.03em;
+}
+/* Toast */
+.toast-container { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); z-index: 9999; pointer-events: none; }
+.toast {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 24px; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 0.9rem; font-weight: 500; color: #fff;
+  box-shadow: var(--shadow-lg); opacity: 0; transform: translateY(16px);
+  transition: opacity 300ms ease, transform 300ms ease; pointer-events: auto;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast--success { background: var(--sage-dark); }
+.toast--duplicate { background: var(--gold-dark); }
+.toast--error { background: #B94A48; }
+.toast svg { flex-shrink: 0; }
+.email-form button .spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin 0.6s linear infinite;
+  vertical-align: middle; margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.cta-blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.08; }
+.cta-blob-1 { width: 400px; height: 400px; background: var(--gold); top: -100px; left: -100px; }
+.cta-blob-2 { width: 300px; height: 300px; background: var(--sage); bottom: -80px; right: -60px; }
+
+/* ========== FOOTER ========== */
+.footer { padding: 40px 0; background: var(--charcoal); border-top: 1px solid rgba(245,240,232,0.06); }
+.footer .container { display: flex; align-items: center; justify-content: space-between; }
+.footer-copy { font-size: 0.8rem; color: rgba(245,240,232,0.4); }
+.footer-links { display: flex; gap: 24px; list-style: none; }
+.footer-links a { font-size: 0.8rem; color: rgba(245,240,232,0.4); transition: color var(--transition-fast); }
+.footer-links a:hover { color: var(--beige); }
+
+/* ========== WAVE CANVAS ========== */
+.wave-canvas { width: 100%; height: 100%; }
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1024px) {
+  .hero .container { grid-template-columns: 1fr; text-align: center; }
+  .hero-content { max-width: 100%; margin: 0 auto; }
+  .hero-sub { margin: 0 auto 40px; }
+  .hero-actions { justify-content: center; }
+  .hero-social-proof { justify-content: center; }
+  .hero-visual { margin-top: 48px; }
+  .mockup-container { max-width: 420px; margin: 0 auto; }
+  .float-notification.top-right { right: 0; }
+  .float-notification.bottom-left { left: 0; }
+  .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .how-steps::before { display: none; }
+  .feature-row { gap: 40px; }
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-toggle { display: flex; flex-direction: column; gap: 0; }
+  .nav-links.open {
+    display: flex; flex-direction: column; position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: rgba(245,240,232,0.97); backdrop-filter: blur(20px);
+    padding: 24px; gap: 20px; box-shadow: var(--shadow-md);
+  }
+  .hero { min-height: auto; padding: 100px 0 60px; }
+  .stats-grid { grid-template-columns: 1fr; gap: 16px; }
+  .stat-card { padding: 28px 20px; }
+  .how-steps { grid-template-columns: 1fr; gap: 40px; }
+  .feature-row { grid-template-columns: 1fr; }
+  .feature-row.reverse .feature-text { order: 1; }
+  .feature-row.reverse .feature-visual { order: 2; }
+  .feature-row.reverse .feature-text { margin-left: 0; }
+  .feature-mockup { transform: none; }
+  .feature-row.reverse .feature-mockup { transform: none; }
+  .diff-grid { grid-template-columns: 1fr; }
+  .pricing-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+  .pricing-card.featured { transform: none; }
+  .pricing-card.featured:hover { transform: translateY(-4px); }
+  .testimonials-grid { grid-template-columns: 1fr; }
+  .email-form { flex-direction: column; }
+  .email-form button { width: 100%; }
+  .footer .container { flex-direction: column; gap: 16px; text-align: center; }
+  .float-notification { display: none; }
+}
+
+@media (max-width: 375px) {
+  .hero h1 { font-size: 2rem; }
+  .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+  .hero-actions { flex-direction: column; width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== NAVIGATION ========== -->
+<nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
+  <div class="container">
+    <a href="#" class="nav-logo" aria-label="InvoiceShield home">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+        <rect x="2" y="4" width="18" height="22" rx="3" stroke="#2D2A26" stroke-width="2" fill="none"/>
+        <path d="M7 10h8M7 14h6M7 18h4" stroke="#C8A35F" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="21" cy="9" r="6" fill="#8BA888" stroke="#FDFCFA" stroke-width="2"/>
+        <path d="M19 9l1.5 1.5L23 7.5" stroke="#FDFCFA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      InvoiceShield
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="app/" class="nav-cta">Check a Client Free</a></li>
+    </ul>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ========== HERO ========== -->
+<section class="hero" id="hero">
+  <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-badge reveal">
+        <span class="hero-badge-dot" aria-hidden="true"></span>
+        Client risk intelligence for B2B
+      </div>
+      <h1 class="reveal reveal-delay-1">Know if you'll get paid <span>before you send the invoice.</span></h1>
+      <p class="hero-sub reveal reveal-delay-2">InvoiceShield analyzes your client and your deal to flag payment risk and tell you exactly how to protect yourself. Stop guessing. Start knowing.</p>
+      <div class="hero-actions reveal reveal-delay-3">
+        <a href="app/" class="btn-primary">
+          <span>Check a Client Free</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#how" class="btn-secondary">See how it works</a>
+      </div>
+      <div class="hero-social-proof reveal reveal-delay-4">
+        <div class="hero-avatars" aria-hidden="true">
+          <div class="avatar" style="background:var(--gold)">S</div>
+          <div class="avatar" style="background:var(--sage-dark)">M</div>
+          <div class="avatar" style="background:var(--espresso)">J</div>
+          <div class="avatar" style="background:var(--charcoal-light)">A</div>
+        </div>
+        <p><strong>1,200+ invoices analyzed</strong> &middot; $48K in risky invoices flagged</p>
+      </div>
+    </div>
+    <div class="hero-visual reveal-scale">
+      <div class="mockup-container">
+        <!-- Floating: score saved -->
+        <div class="float-notification top-right" aria-hidden="true">
+          <div class="float-notif-row">
+            <div class="float-notif-icon red">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3M8 10.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <div class="float-notif-text">High Risk Detected</div>
+              <div class="float-notif-sub">Require 50% upfront</div>
+            </div>
+          </div>
+        </div>
+        <!-- Floating: safe client -->
+        <div class="float-notification bottom-left" aria-hidden="true">
+          <div class="float-notif-row">
+            <div class="float-notif-icon green">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <div class="float-notif-text">Bloom Studio: Low Risk</div>
+              <div class="float-notif-sub">Safe to proceed, Net 30</div>
+            </div>
+          </div>
+        </div>
+        <!-- Risk Report Mockup -->
+        <div class="risk-mockup">
+          <div class="risk-mockup-header">
+            <div class="risk-mockup-title">Client Risk Report</div>
+            <span class="risk-mockup-badge high">HIGH RISK</span>
+          </div>
+          <div class="risk-score-area">
+            <div class="risk-gauge">
+              <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="40" fill="none" stroke="var(--beige-dark)" stroke-width="8"/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="var(--red)" stroke-width="8" stroke-dasharray="251" stroke-dashoffset="83" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                <text x="50" y="46" text-anchor="middle" font-family="Calistoga" font-size="24" fill="var(--charcoal)">67</text>
+                <text x="50" y="62" text-anchor="middle" font-size="9" fill="var(--charcoal-muted)">/ 100</text>
+              </svg>
+            </div>
+            <div class="risk-meta">
+              <div class="risk-meta-client">Acme Studio Inc.</div>
+              <div class="risk-meta-email">billing@acmestudio.co</div>
+              <div class="risk-meta-prob">Late payment probability: <strong>64%</strong></div>
+            </div>
+          </div>
+          <div class="risk-signals">
+            <div class="risk-signal">
+              <span class="risk-signal-dot high"></span>
+              <span class="risk-signal-text">Domain less than 12 months old</span>
+              <span class="risk-signal-pts">+18 pts</span>
+            </div>
+            <div class="risk-signal">
+              <span class="risk-signal-dot high"></span>
+              <span class="risk-signal-text">No verified legal entity match</span>
+              <span class="risk-signal-pts">+15 pts</span>
+            </div>
+            <div class="risk-signal">
+              <span class="risk-signal-dot medium"></span>
+              <span class="risk-signal-text">Free email provider detected</span>
+              <span class="risk-signal-pts">+8 pts</span>
+            </div>
+            <div class="risk-signal">
+              <span class="risk-signal-dot medium"></span>
+              <span class="risk-signal-text">First-time client, Net 30 terms</span>
+              <span class="risk-signal-pts">+7 pts</span>
+            </div>
+          </div>
+          <div class="risk-recommend">
+            <div class="risk-recommend-title">Recommended Action</div>
+            <div class="risk-recommend-items">
+              <div class="risk-recommend-item">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6l2 2 4-4" stroke="#6F8E6C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Ask for 50% deposit upfront
+              </div>
+              <div class="risk-recommend-item">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6l2 2 4-4" stroke="#6F8E6C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Switch to Net 7 on remaining
+              </div>
+              <div class="risk-recommend-item">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6l2 2 4-4" stroke="#6F8E6C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Use milestone billing
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== PAIN SECTION ========== -->
+<section class="pain-section" id="pain">
+  <div class="container">
+    <div class="pain-header">
+      <h2 class="reveal">You don't lose money on bad work.<br>You lose money on <span class="text-gold">bad clients.</span></h2>
+      <p class="reveal reveal-delay-1">The real risk isn't the project. It's whether you'll get paid for it.</p>
+    </div>
+    <div class="pain-steps reveal reveal-delay-2">
+      <div class="pain-step">
+        <div class="pain-step-num dim">1</div>
+        <div class="pain-step-text dim">You send the invoice.</div>
+      </div>
+      <div class="pain-connector"></div>
+      <div class="pain-step">
+        <div class="pain-step-num dim">2</div>
+        <div class="pain-step-text dim">Then you wait.</div>
+      </div>
+      <div class="pain-connector"></div>
+      <div class="pain-step">
+        <div class="pain-step-num dim">3</div>
+        <div class="pain-step-text dim">Then you follow up. Awkwardly.</div>
+      </div>
+      <div class="pain-connector"></div>
+      <div class="pain-step">
+        <div class="pain-step-num dim">4</div>
+        <div class="pain-step-text dim">Then you chase. And chase.</div>
+      </div>
+      <div class="pain-connector"></div>
+      <div class="pain-step">
+        <div class="pain-step-num red">5</div>
+        <div class="pain-step-text"><strong>One unpaid invoice wipes out weeks of work.</strong></div>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card reveal reveal-delay-1">
+        <div class="stat-icon red-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5M12 15v1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="stat-number" data-target="91" data-suffix="%">0%</div>
+        <div class="stat-label">of contractors experience late payments</div>
+      </div>
+      <div class="stat-card reveal reveal-delay-2">
+        <div class="stat-icon gold-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="stat-number" data-target="56" data-suffix=" days">0 days</div>
+        <div class="stat-label">average wait after submitting a pay application</div>
+      </div>
+      <div class="stat-card reveal reveal-delay-3">
+        <div class="stat-icon sage-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 10h4M7 14h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="16" cy="12" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+        </div>
+        <div class="stat-number" data-target="46" data-prefix="$" data-suffix="B">$0B</div>
+        <div class="stat-label">in construction payments remain unpaid after 30 days</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== HOW IT WORKS ========== -->
+<section class="how-section" id="how">
+  <div class="container">
+    <div class="how-header">
+      <div class="section-label reveal"><span class="section-label-line" aria-hidden="true"></span>How it works</div>
+      <h2 class="section-title reveal reveal-delay-1">Decide in 60 seconds. Not 60 days.</h2>
+      <p class="section-sub reveal reveal-delay-2">Enter a client, get a risk score, and know exactly what to do. No signup required for your first check.</p>
+    </div>
+    <div class="how-steps">
+      <div class="step-card step-1 reveal reveal-delay-1">
+        <div class="step-number" aria-hidden="true">1</div>
+        <div class="step-icon-area" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="18" r="8" stroke="#C8A35F" stroke-width="2" fill="none"/>
+            <path d="M12 38c0-6.63 5.37-12 12-12s12 5.37 12 12" stroke="#C8A35F" stroke-width="2" stroke-linecap="round"/>
+            <path d="M30 14l2 2 4-4" stroke="#8BA888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>Enter Your Client</h3>
+        <p>Company name, email, domain, or upload an invoice. Takes 30 seconds.</p>
+      </div>
+      <div class="step-card step-2 reveal reveal-delay-2">
+        <div class="step-number" aria-hidden="true">2</div>
+        <div class="step-icon-area" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="14" stroke="#4A3728" stroke-width="2" fill="none"/>
+            <circle cx="24" cy="24" r="8" stroke="#C8A35F" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+            <circle cx="24" cy="24" r="3" fill="#C8A35F"/>
+            <path d="M24 10v4M24 34v4M10 24h4M34 24h4" stroke="#4A3728" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>We Analyze Risk</h3>
+        <p>Business legitimacy, domain age, email quality, public records, and behavioral signals.</p>
+      </div>
+      <div class="step-card step-3 reveal reveal-delay-3">
+        <div class="step-number" aria-hidden="true">3</div>
+        <div class="step-icon-area" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <rect x="10" y="10" width="28" height="28" rx="4" stroke="#6F8E6C" stroke-width="2" fill="none"/>
+            <path d="M18 24l4 4 8-8" stroke="#6F8E6C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>Get Your Decision</h3>
+        <p>Risk score, clear explanation, and exact payment terms to protect yourself.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FEATURES ========== -->
+<section class="features-section" id="features">
+  <div class="container">
+    <div class="features-header">
+      <div class="section-label reveal"><span class="section-label-line" aria-hidden="true"></span>The Decision Engine</div>
+      <h2 class="section-title reveal reveal-delay-1">Not a credit report. A decision engine.</h2>
+      <p class="section-sub reveal reveal-delay-2">We don't just score companies. We tell you what to do about THIS specific deal.</p>
+    </div>
+
+    <!-- Feature 1: Risk Score -->
+    <div class="feature-row reveal">
+      <div class="feature-text">
+        <div class="feature-icon red-bg" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Invoice-Level Risk Score</h3>
+        <p>Not just "is this company creditworthy" but "will THIS invoice get paid." Same client, different deal size, different risk. We score the deal, not just the company.</p>
+        <span class="feature-tag">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v2M6 9v2M1 6h2M9 6h2M2.46 2.46l1.42 1.42M8.12 8.12l1.42 1.42" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
+          What D&amp;B can't do
+        </span>
+      </div>
+      <div class="feature-visual">
+        <div class="feature-mockup">
+          <div class="mockup-bar"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span><span class="mockup-url">invoiceshield.app/risk-check</span></div>
+          <div class="mockup-body">
+            <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+              <div style="width:56px;height:56px;flex-shrink:0">
+                <svg viewBox="0 0 56 56"><circle cx="28" cy="28" r="22" fill="none" stroke="var(--beige-dark)" stroke-width="5"/><circle cx="28" cy="28" r="22" fill="none" stroke="var(--red)" stroke-width="5" stroke-dasharray="138" stroke-dashoffset="46" stroke-linecap="round" transform="rotate(-90 28 28)"/><text x="28" y="32" text-anchor="middle" font-family="Calistoga" font-size="14" fill="var(--charcoal)">67</text></svg>
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:0.6rem">Acme Studio Inc.</div>
+                <div style="font-size:0.45rem;color:var(--charcoal-muted)">$4,800 invoice &middot; Net 30</div>
+                <div style="font-size:0.45rem;color:var(--red);font-weight:600;margin-top:2px">HIGH RISK &middot; 64% late probability</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+              <div style="background:var(--beige-light);border-radius:4px;padding:6px 8px">
+                <div style="font-size:0.4rem;color:var(--charcoal-muted);text-transform:uppercase;font-weight:700">Business</div>
+                <div style="font-family:var(--font-display);font-size:0.6rem;color:var(--red)">24/30</div>
+              </div>
+              <div style="background:var(--beige-light);border-radius:4px;padding:6px 8px">
+                <div style="font-size:0.4rem;color:var(--charcoal-muted);text-transform:uppercase;font-weight:700">Digital</div>
+                <div style="font-family:var(--font-display);font-size:0.6rem;color:var(--gold-dark)">13/20</div>
+              </div>
+              <div style="background:var(--beige-light);border-radius:4px;padding:6px 8px">
+                <div style="font-size:0.4rem;color:var(--charcoal-muted);text-transform:uppercase;font-weight:700">Payment</div>
+                <div style="font-family:var(--font-display);font-size:0.6rem;color:var(--red)">18/30</div>
+              </div>
+              <div style="background:var(--beige-light);border-radius:4px;padding:6px 8px">
+                <div style="font-size:0.4rem;color:var(--charcoal-muted);text-transform:uppercase;font-weight:700">Invoice</div>
+                <div style="font-family:var(--font-display);font-size:0.6rem;color:var(--gold-dark)">12/20</div>
+              </div>
+            </div>
+            <div style="background:rgba(139,168,136,0.1);border-radius:4px;padding:6px 8px;font-size:0.45rem;color:var(--sage-dark);font-weight:600">
+              Recommended: 50% upfront, Net 7, milestone billing
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 2: Invoice Simulator -->
+    <div class="feature-row reverse reveal">
+      <div class="feature-text">
+        <div class="feature-icon gold-bg" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 12h4l3-8 4 16 3-8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Invoice Scenario Simulator</h3>
+        <p>See how your risk changes when you adjust terms. Net 30 might be dangerous, but 50% upfront drops risk to medium. Play with scenarios until you find the safe zone.</p>
+        <span class="feature-tag">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.55 3.14L11 4.63 8.5 7.07l.59 3.43L6 8.88 2.91 10.5l.59-3.43L1 4.63l3.45-.49L6 1z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Interactive
+        </span>
+      </div>
+      <div class="feature-visual">
+        <div class="feature-mockup">
+          <div class="mockup-bar"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span><span class="mockup-url">invoiceshield.app/simulator</span></div>
+          <div class="mockup-body">
+            <div style="font-size:0.45rem;font-weight:700;color:var(--charcoal-muted);text-transform:uppercase;margin-bottom:8px;letter-spacing:0.05em">What if you change the terms?</div>
+            <div style="display:flex;gap:6px">
+              <div style="flex:1;background:rgba(180,80,60,0.06);border:1px solid rgba(180,80,60,0.15);border-radius:6px;padding:8px;text-align:center">
+                <div style="font-size:0.4rem;color:var(--charcoal-muted);margin-bottom:4px">Net 30, no deposit</div>
+                <div style="font-family:var(--font-display);font-size:0.9rem;color:var(--red)">67</div>
+                <div style="font-size:0.35rem;font-weight:700;color:var(--red);margin-top:2px">HIGH RISK</div>
+              </div>
+              <div style="flex:1;background:rgba(200,163,95,0.06);border:1px solid rgba(200,163,95,0.2);border-radius:6px;padding:8px;text-align:center">
+                <div style="font-size:0.4rem;color:var(--charcoal-muted);margin-bottom:4px">50% upfront, Net 7</div>
+                <div style="font-family:var(--font-display);font-size:0.9rem;color:var(--gold-dark)">42</div>
+                <div style="font-size:0.35rem;font-weight:700;color:var(--gold-dark);margin-top:2px">MEDIUM RISK</div>
+              </div>
+              <div style="flex:1;background:rgba(139,168,136,0.06);border:1px solid rgba(139,168,136,0.2);border-radius:6px;padding:8px;text-align:center">
+                <div style="font-size:0.4rem;color:var(--charcoal-muted);margin-bottom:4px">100% upfront</div>
+                <div style="font-family:var(--font-display);font-size:0.9rem;color:var(--sage-dark)">18</div>
+                <div style="font-size:0.35rem;font-weight:700;color:var(--sage-dark);margin-top:2px">LOW RISK</div>
+              </div>
+            </div>
+            <div style="margin-top:10px;padding:6px 8px;background:var(--beige-light);border-radius:4px;display:flex;align-items:center;gap:6px">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v3l2 2" stroke="var(--gold)" stroke-width="1.2" stroke-linecap="round"/><circle cx="5" cy="5" r="4" stroke="var(--gold)" stroke-width="1"/></svg>
+              <span style="font-size:0.45rem;color:var(--charcoal-light)">Adjust terms to find your safe zone</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 3: Smart Enforcement -->
+    <div class="feature-row reveal">
+      <div class="feature-text">
+        <div class="feature-icon sage-bg" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Smart Enforcement Layer</h3>
+        <p>When invoices do go overdue, AI sends professional escalating reminders in your voice. Friendly nudge, firm follow-up, final notice. 68% get paid after the first reminder.</p>
+      </div>
+      <div class="feature-visual">
+        <div class="feature-mockup">
+          <div class="mockup-bar"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span><span class="mockup-url">invoiceshield.app/reminders</span></div>
+          <div class="mockup-body">
+            <div style="display:flex;gap:6px">
+              <div style="flex:1;background:var(--beige-light);border-radius:6px;padding:6px">
+                <div style="font-size:0.4rem;font-weight:700;color:var(--sage-dark);display:flex;align-items:center;gap:3px;margin-bottom:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--sage)"></span> Friendly</div>
+                <div style="background:white;border-radius:4px;padding:5px 6px;margin-bottom:3px;font-size:0.45rem;border:1px solid rgba(45,42,38,0.04)"><strong>Acme Corp</strong><br>$1,800</div>
+                <div style="background:white;border-radius:4px;padding:5px 6px;font-size:0.45rem;border:1px solid rgba(45,42,38,0.04)"><strong>NovaWorks</strong><br>$2,750</div>
+              </div>
+              <div style="flex:1;background:var(--beige-light);border-radius:6px;padding:6px">
+                <div style="font-size:0.4rem;font-weight:700;color:var(--gold-dark);display:flex;align-items:center;gap:3px;margin-bottom:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--gold)"></span> Firm</div>
+                <div style="background:white;border-radius:4px;padding:5px 6px;font-size:0.45rem;border:1px solid rgba(45,42,38,0.04)"><strong>Ren & Hale</strong><br>$2,050</div>
+              </div>
+              <div style="flex:1;background:var(--beige-light);border-radius:6px;padding:6px">
+                <div style="font-size:0.4rem;font-weight:700;color:var(--red);display:flex;align-items:center;gap:3px;margin-bottom:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--red)"></span> Final</div>
+                <div style="background:white;border-radius:4px;padding:5px 6px;font-size:0.45rem;border:1px solid rgba(45,42,38,0.04)"><strong>Pixel & Co</strong><br>$4,500</div>
+              </div>
+            </div>
+            <div style="margin-top:8px;padding:6px 8px;background:var(--green-light);border-radius:4px;display:flex;align-items:center;gap:6px">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--sage)"></span>
+              <span style="font-size:0.45rem;font-weight:600;color:var(--sage-dark)">68% paid after first reminder</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 4: Network Intelligence -->
+    <div class="feature-row reverse reveal">
+      <div class="feature-text">
+        <div class="feature-icon espresso-bg" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M5 20c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M16 5l1 1 2.5-2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Network Intelligence</h3>
+        <p>Over time, payment behavior data across all InvoiceShield users builds a real picture. See warnings like "3 other users reported late payments from this client" before you commit.</p>
+        <span class="feature-tag">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.55 3.14L11 4.63 8.5 7.07l.59 3.43L6 8.88 2.91 10.5l.59-3.43L1 4.63l3.45-.49L6 1z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Your future moat
+        </span>
+      </div>
+      <div class="feature-visual">
+        <div class="feature-mockup">
+          <div class="mockup-bar"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span><span class="mockup-url">invoiceshield.app/network</span></div>
+          <div class="mockup-body">
+            <div style="font-size:0.45rem;font-weight:700;color:var(--charcoal-muted);text-transform:uppercase;margin-bottom:6px;letter-spacing:0.05em">Network Payment Data</div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;align-items:center;gap:6px;padding:5px 6px;background:var(--beige-light);border-radius:4px"><div style="width:14px;height:14px;border-radius:50%;background:var(--sage-dark);display:flex;align-items:center;justify-content:center;font-size:0.3rem;font-weight:700;color:white;flex-shrink:0">LF</div><span style="font-size:0.5rem;font-weight:600;flex:1">Leafbird</span><span style="font-size:0.4rem;color:var(--sage-dark)">0 flags</span><span style="font-family:var(--font-display);font-size:0.6rem;color:var(--sage-dark)">95</span></div>
+              <div style="display:flex;align-items:center;gap:6px;padding:5px 6px;background:var(--beige-light);border-radius:4px"><div style="width:14px;height:14px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;font-size:0.3rem;font-weight:700;color:white;flex-shrink:0">BS</div><span style="font-size:0.5rem;font-weight:600;flex:1">Bloom Studio</span><span style="font-size:0.4rem;color:var(--sage-dark)">0 flags</span><span style="font-family:var(--font-display);font-size:0.6rem;color:var(--sage-dark)">91</span></div>
+              <div style="display:flex;align-items:center;gap:6px;padding:5px 6px;background:var(--beige-light);border-radius:4px"><div style="width:14px;height:14px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:0.3rem;font-weight:700;color:white;flex-shrink:0">AC</div><span style="font-size:0.5rem;font-weight:600;flex:1">Acme Corp</span><span style="font-size:0.4rem;color:var(--gold-dark)">2 flags</span><span style="font-family:var(--font-display);font-size:0.6rem;color:var(--gold-dark)">62</span></div>
+              <div style="display:flex;align-items:center;gap:6px;padding:5px 6px;background:rgba(180,80,60,0.04);border-radius:4px;border:1px solid rgba(180,80,60,0.1)"><div style="width:14px;height:14px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:0.3rem;font-weight:700;color:white;flex-shrink:0">PC</div><span style="font-size:0.5rem;font-weight:600;flex:1">Pixel & Co</span><span style="font-size:0.4rem;color:var(--red);font-weight:600">5 flags</span><span style="font-family:var(--font-display);font-size:0.6rem;color:var(--red)">28</span></div>
+            </div>
+            <div style="margin-top:6px;font-size:0.4rem;color:var(--charcoal-muted);text-align:center">Crowdsourced from 1,200+ analyzed invoices</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== DIFFERENTIATION ========== -->
+<section class="diff-section" id="diff">
+  <div class="container">
+    <div class="diff-header">
+      <div class="section-label reveal"><span class="section-label-line" aria-hidden="true"></span>Why InvoiceShield</div>
+      <h2 class="section-title reveal reveal-delay-1">Not a credit report. A decision engine.</h2>
+      <p class="section-sub reveal reveal-delay-2">Traditional credit bureaus tell you about a company. We tell you about your specific deal.</p>
+    </div>
+    <div class="diff-grid">
+      <div class="diff-card old reveal">
+        <div class="diff-card-label">Traditional tools (D&amp;B, credit reports)</div>
+        <ul>
+          <li>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 4l6 6M10 4l-6 6" stroke="#B4503C" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Company-level score only
+          </li>
+          <li>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 4l6 6M10 4l-6 6" stroke="#B4503C" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Static, backward-looking data
+          </li>
+          <li>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 4l6 6M10 4l-6 6" stroke="#B4503C" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Built for banks and enterprises
+          </li>
+          <li>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 4l6 6M10 4l-6 6" stroke="#B4503C" stroke-width="1.5" stroke-linecap="round"/></svg>
+            No actionable recommendations
+          </li>
+          <li>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 4l6 6M10 4l-6 6" stroke="#B4503C" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Slow, expensive, complex
+          </li>
+        </ul>
+      </div>
+      <div class="diff-card new reveal reveal-delay-1">
+        <div class="diff-card-label">InvoiceShield</div>
+        <ul>
+          <li>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="#6F8E6C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Invoice-level, deal-specific scoring
+          </li>
+          <li>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="#6F8E6C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Real-time + behavioral signals
+          </li>
+          <li>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="#6F8E6C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Built for freelancers and contractors
+          </li>
+          <li>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="#6F8E6C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Exact terms and actions to take
+          </li>
+          <li>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="#6F8E6C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Instant, affordable, simple
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="diff-quote reveal reveal-delay-2">
+      D&amp;B tells you if a company is creditworthy.<br>InvoiceShield tells you if <span class="text-gold">THIS invoice</span> will get paid.
+    </div>
+  </div>
+</section>
+
+<!-- ========== PRICING ========== -->
+<section class="pricing-section" id="pricing">
+  <div class="container">
+    <div class="pricing-header">
+      <div class="section-label reveal"><span class="section-label-line" aria-hidden="true"></span>Pricing</div>
+      <h2 class="section-title reveal reveal-delay-1">Avoid one bad client and it pays for itself</h2>
+      <p class="section-sub reveal reveal-delay-2">Start free. Upgrade when you need more checks.</p>
+    </div>
+    <div class="pricing-grid">
+      <!-- Free -->
+      <div class="pricing-card reveal">
+        <div class="pricing-tier">Starter</div>
+        <div class="pricing-name">Free</div>
+        <div class="pricing-price">
+          <span class="amount">$0</span>
+          <span class="period">/month</span>
+        </div>
+        <p class="pricing-desc">Try InvoiceShield with 3 free risk checks per month.</p>
+        <ul class="pricing-features">
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#8BA888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            3 risk checks/month
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#8BA888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Risk score + explanation
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#8BA888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Payment term recommendations
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#8BA888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Basic reminder automation
+          </li>
+        </ul>
+        <button class="pricing-btn outline">Get Started Free</button>
+      </div>
+      <!-- Pro (Featured) -->
+      <div class="pricing-card featured reveal reveal-delay-1">
+        <span class="pricing-badge">Most Popular</span>
+        <div class="pricing-tier">Pro</div>
+        <div class="pricing-name">Pro</div>
+        <div class="pricing-price">
+          <span class="amount">$19</span>
+          <span class="period">/month</span>
+        </div>
+        <p class="pricing-desc">For freelancers and contractors who check clients regularly.</p>
+        <ul class="pricing-features">
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#C8A35F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            50 risk checks/month
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#C8A35F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Everything in Starter
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#C8A35F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <strong>Invoice scenario simulator</strong>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#C8A35F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            AI-personalized reminders
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#C8A35F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            QuickBooks integration
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#C8A35F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Priority support
+          </li>
+        </ul>
+        <button class="pricing-btn primary">Start 14-Day Trial</button>
+      </div>
+      <!-- Business -->
+      <div class="pricing-card reveal reveal-delay-2">
+        <div class="pricing-tier">Business</div>
+        <div class="pricing-name">Business</div>
+        <div class="pricing-price">
+          <span class="amount">$49</span>
+          <span class="period">/month</span>
+        </div>
+        <p class="pricing-desc">For agencies and firms. Unlimited checks and full protection.</p>
+        <ul class="pricing-features">
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#8BA888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Unlimited risk checks
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#8BA888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Everything in Pro
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#8BA888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <strong>Network intelligence data</strong>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#8BA888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Custom branding on reminders
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#8BA888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Team access (up to 5 seats)
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5.5" stroke="#8BA888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            API access
+          </li>
+        </ul>
+        <button class="pricing-btn outline">Start 14-Day Trial</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== TESTIMONIALS ========== -->
+<section class="testimonials-section" id="testimonials">
+  <div class="container">
+    <div class="testimonials-header">
+      <div class="section-label reveal"><span class="section-label-line" aria-hidden="true"></span>Testimonials</div>
+      <h2 class="section-title reveal reveal-delay-1">They stopped guessing. You should too.</h2>
+      <p class="section-sub reveal reveal-delay-2">Early users are already avoiding risky clients and getting paid faster.</p>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card reveal">
+        <div class="testimonial-stars" aria-label="5 out of 5 stars">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+        </div>
+        <p class="testimonial-text">"InvoiceShield flagged a client as high risk before I started a $8K project. Turns out they had a history of ghosting contractors. Saved me weeks of unpaid work."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background: var(--gold)" aria-hidden="true">MR</div>
+          <div>
+            <div class="testimonial-name">Marcus R.</div>
+            <div class="testimonial-role">Full-Stack Developer</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card reveal reveal-delay-1">
+        <div class="testimonial-stars" aria-label="5 out of 5 stars">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+        </div>
+        <p class="testimonial-text">"I now check every new client before sending a proposal. The scenario simulator helped me negotiate 50% upfront on a medium-risk project. Game changer for cash flow."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background: var(--sage-dark)" aria-hidden="true">SK</div>
+          <div>
+            <div class="testimonial-name">Sarah K.</div>
+            <div class="testimonial-role">Brand Designer</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card reveal reveal-delay-2">
+        <div class="testimonial-stars" aria-label="5 out of 5 stars">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2.1 4.2L15 5.8l-3.5 3.4.8 4.8L8 11.8 3.7 14l.8-4.8L1 5.8l4.9-.6L8 1z"/></svg>
+        </div>
+        <p class="testimonial-text">"As a contractor, late payments almost put me under twice. The risk score told me to require a deposit on a project I would have invoiced Net 30. Client paid the deposit no problem."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background: var(--espresso)" aria-hidden="true">JB</div>
+          <div>
+            <div class="testimonial-name">Joel B.</div>
+            <div class="testimonial-role">Drywall Contractor</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FAQ ========== -->
+<section class="faq-section" id="faq">
+  <div class="container">
+    <div class="faq-header">
+      <div class="section-label reveal"><span class="section-label-line" aria-hidden="true"></span>FAQ</div>
+      <h2 class="section-title reveal reveal-delay-1">Common questions</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item reveal">
+        <button class="faq-question" aria-expanded="false">
+          How is this different from a credit report?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-answer" role="region">
+          <div class="faq-answer-inner">Credit reports like D&amp;B score companies. We score deals. The same company might be low risk on a $500 invoice but high risk on a $50,000 invoice. We also give you exact action steps, not just a number.</div>
+        </div>
+      </div>
+      <div class="faq-item reveal reveal-delay-1">
+        <button class="faq-question" aria-expanded="false">
+          What data do you analyze?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-answer" role="region">
+          <div class="faq-answer-inner">We check business registration, domain age, email quality, website presence, public records, and over time, crowdsourced payment behavior from our user network. All from publicly available data.</div>
+        </div>
+      </div>
+      <div class="faq-item reveal reveal-delay-2">
+        <button class="faq-question" aria-expanded="false">
+          Is InvoiceShield an invoicing tool?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-answer" role="region">
+          <div class="faq-answer-inner">No. We don't create invoices. InvoiceShield is a decision engine that sits before your invoicing tool. It tells you whether to proceed with a client and under what terms. We also provide AI-powered payment reminders when invoices go overdue.</div>
+        </div>
+      </div>
+      <div class="faq-item reveal reveal-delay-3">
+        <button class="faq-question" aria-expanded="false">
+          What integrations do you support?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-answer" role="region">
+          <div class="faq-answer-inner">QuickBooks integration is available on Pro and Business plans. You can also upload invoices via CSV or simply enter client details manually. Jobber, Sage, and Xero integrations are on the roadmap.</div>
+        </div>
+      </div>
+      <div class="faq-item reveal reveal-delay-4">
+        <button class="faq-question" aria-expanded="false">
+          Can I cancel anytime?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-answer" role="region">
+          <div class="faq-answer-inner">Yes. No contracts, no commitments. Cancel anytime from your dashboard. We offer a 14-day free trial on paid plans, no credit card required.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FINAL CTA ========== -->
+<section class="final-cta" id="cta">
+  <div class="cta-blob cta-blob-1" aria-hidden="true"></div>
+  <div class="cta-blob cta-blob-2" aria-hidden="true"></div>
+  <div class="container">
+    <div class="final-cta-content">
+      <h2 class="reveal">Stop guessing. Start <span class="text-gold">knowing.</span></h2>
+      <p class="reveal reveal-delay-1">Check your next client before you send the invoice. Join the waitlist for early access.</p>
+      <form class="email-form reveal reveal-delay-2" onsubmit="handleSubmit(event)">
+        <label for="email-input" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Email address</label>
+        <input type="email" id="email-input" placeholder="you@business.com" required autocomplete="email">
+        <button type="submit">Get Early Access</button>
+      </form>
+      <p class="final-cta-note reveal reveal-delay-3">Free to start. No credit card required. 3 checks/month on the free plan.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Toast notification -->
+<div class="toast-container" id="toastContainer">
+  <div class="toast" id="toast"></div>
+</div>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+  <div class="container">
+    <p class="footer-copy">&copy; 2026 InvoiceShield. All rights reserved.</p>
+    <ul class="footer-links">
+      <li><a href="#">Privacy</a></li>
+      <li><a href="#">Terms</a></li>
+      <li><a href="#">Contact</a></li>
+    </ul>
+  </div>
+</footer>
+
+<!-- ========== SCRIPTS ========== -->
+<script>
+// ===== Navbar scroll effect =====
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 40);
+}, { passive: true });
+
+// ===== Mobile nav toggle =====
+const navToggle = document.getElementById('navToggle');
+const navLinks = document.getElementById('navLinks');
+navToggle.addEventListener('click', () => {
+  const open = navLinks.classList.toggle('open');
+  navToggle.setAttribute('aria-expanded', open);
+});
+navLinks.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => {
+    navLinks.classList.remove('open');
+    navToggle.setAttribute('aria-expanded', 'false');
+  });
+});
+
+// ===== Intersection Observer for reveals =====
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => {
+  revealObserver.observe(el);
+});
+
+// ===== Animated counters =====
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      animateCounter(entry.target);
+      counterObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.stat-number[data-target]').forEach(el => {
+  counterObserver.observe(el);
+});
+
+function animateCounter(el) {
+  const target = parseInt(el.dataset.target);
+  const prefix = el.dataset.prefix || '';
+  const suffix = el.dataset.suffix || '';
+  const duration = 1800;
+  const startTime = performance.now();
+
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(eased * target);
+    el.textContent = prefix + current + suffix;
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+// ===== FAQ accordion =====
+document.querySelectorAll('.faq-question').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(openItem => {
+      openItem.classList.remove('open');
+      openItem.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+    });
+    if (!isOpen) {
+      item.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+  });
+});
+
+// ===== Toast helper =====
+function showToast(type, message) {
+  const toast = document.getElementById('toast');
+  const icons = {
+    success: '<svg width="20" height="20" fill="none" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="rgba(255,255,255,0.2)"/><path d="M6 10.5l2.5 2.5L14 7.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    duplicate: '<svg width="20" height="20" fill="none" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="rgba(255,255,255,0.2)"/><path d="M10 6v5M10 13.5v.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
+    error: '<svg width="20" height="20" fill="none" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="rgba(255,255,255,0.2)"/><path d="M7 7l6 6M13 7l-6 6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
+  };
+  toast.className = 'toast toast--' + type;
+  toast.innerHTML = (icons[type] || '') + '<span>' + message + '</span>';
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+// ===== Email form (via Netlify function) =====
+async function handleSubmit(e) {
+  e.preventDefault();
+  const input = e.target.querySelector('input');
+  const btn = e.target.querySelector('button');
+  const email = input.value.trim();
+  if (!email) return;
+
+  const originalText = btn.textContent;
+  btn.innerHTML = '<span class="spinner"></span>Joining...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/.netlify/functions/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+
+    if (res.ok) {
+      btn.textContent = "\u2713 You're In!";
+      btn.style.background = 'var(--sage)';
+      input.value = '';
+      showToast('success', 'Welcome aboard! We\u2019ll notify you when we launch.');
+    } else if (res.status === 409) {
+      btn.textContent = 'Already signed up!';
+      btn.style.background = 'var(--gold)';
+      input.value = '';
+      showToast('duplicate', 'You\u2019re already on the list. We\u2019ve got you!');
+    } else {
+      btn.textContent = 'Try again';
+      btn.style.background = '#B94A48';
+      showToast('error', 'Something went wrong. Please try again.');
+    }
+  } catch {
+    btn.textContent = 'Try again';
+    btn.style.background = '#B94A48';
+    showToast('error', 'Network error. Please check your connection.');
+  }
+
+  setTimeout(() => {
+    btn.textContent = originalText;
+    btn.style.background = '';
+    btn.disabled = false;
+  }, 3000);
+}
+
+// ===== Hero wave canvas animation =====
+const canvas = document.getElementById('heroCanvas');
+const ctx = canvas.getContext('2d');
+let animId;
+
+function resizeCanvas() {
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const waves = [
+  { amplitude: 30, wavelength: 400, speed: 0.003, color: 'rgba(200,163,95,0.06)', yOffset: 0.65 },
+  { amplitude: 20, wavelength: 300, speed: 0.004, color: 'rgba(139,168,136,0.05)', yOffset: 0.7 },
+  { amplitude: 25, wavelength: 500, speed: 0.002, color: 'rgba(74,55,40,0.03)', yOffset: 0.75 },
+];
+
+let time = 0;
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function drawWaves() {
+  const w = canvas.offsetWidth;
+  const h = canvas.offsetHeight;
+  ctx.clearRect(0, 0, w, h);
+
+  waves.forEach(wave => {
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    for (let x = 0; x <= w; x += 2) {
+      const y = (h * wave.yOffset) +
+        Math.sin((x / wave.wavelength) * Math.PI * 2 + time * wave.speed * 60) * wave.amplitude +
+        Math.sin((x / (wave.wavelength * 1.5)) * Math.PI * 2 - time * wave.speed * 30) * (wave.amplitude * 0.4);
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(w, h);
+    ctx.closePath();
+    ctx.fillStyle = wave.color;
+    ctx.fill();
+  });
+
+  time++;
+  if (!reducedMotion) {
+    animId = requestAnimationFrame(drawWaves);
+  }
+}
+
+if (!reducedMotion) {
+  drawWaves();
+} else {
+  time = 50;
+  drawWaves();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    cancelAnimationFrame(animId);
+  } else if (!reducedMotion) {
+    drawWaves();
+  }
+});
+</script>
+</body>
+</html>
