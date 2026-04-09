@@ -3408,7 +3408,7 @@ function renderRiskReport(r) {
     </div>
   `;
 
-  if (isStandalone) {
+  if (isStandalone && !standaloneSignedUp) {
     document.getElementById('risk-actions-container').innerHTML = `
       <div class="gated-section" style="margin-top:28px;border-radius:var(--radius-md);min-height:140px">
         <div class="gated-content">${actionsHTML}</div>
@@ -3445,7 +3445,7 @@ function renderRiskReport(r) {
     </div>
   `;
 
-  if (isStandalone) {
+  if (isStandalone && !standaloneSignedUp) {
     document.getElementById('risk-simulator').innerHTML = '';
     document.querySelector('.risk-simulator-wrapper').innerHTML = `
       <div class="risk-section-title">Scenario Simulator</div>
@@ -3470,7 +3470,7 @@ function resetRiskCheck() {
 }
 
 function downloadRiskReport() {
-  if (document.body.classList.contains('standalone-mode')) {
+  if (document.body.classList.contains('standalone-mode') && !standaloneSignedUp) {
     openSignupModal('Sign up to download full risk reports as PDF.');
     return;
   }
@@ -3512,8 +3512,13 @@ function downloadRiskReport() {
 }
 
 function saveRiskClient() {
-  if (document.body.classList.contains('standalone-mode')) {
+  if (document.body.classList.contains('standalone-mode') && !standaloneSignedUp) {
     openSignupModal('Sign up to save clients and track their payment risk over time.');
+    return;
+  }
+  if (document.body.classList.contains('standalone-mode') && standaloneSignedUp) {
+    // Redirect to full app dashboard — clients view with new client flow
+    window.location.href = 'index.html#new-client';
     return;
   }
   if (!lastRiskResult) { showToast('No risk data to save', 'error'); return; }
@@ -3564,6 +3569,7 @@ function saveRiskClient() {
 // =============================================
 const SUPABASE_URL = 'https://jjtpbfmxrfkalrijylwt.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_l4oOyaKAJ3543C4sICB-eQ_SedBsZd8';
+let standaloneSignedUp = false;
 
 function openSignupModal(message) {
   if (message) document.getElementById('signupModalMessage').textContent = message;
@@ -3596,16 +3602,20 @@ async function handleSignupSubmit(e) {
     });
 
     if (res.ok || res.status === 201) {
+      standaloneSignedUp = true;
       btn.textContent = '\u2713 You\'re In!';
       btn.style.background = 'var(--sage)';
-      showToast('Welcome! We\'ll notify you when full access is ready.', 'success');
+      showToast('Welcome! Your results are now unlocked.', 'success');
+      unlockGatedSections();
       setTimeout(function() { closeSignupModal(); btn.textContent = 'Sign Up for Free'; btn.style.background = ''; btn.disabled = false; }, 2500);
     } else {
       const text = await res.text();
       if (text.includes('23505') || res.status === 409) {
+        standaloneSignedUp = true;
         btn.textContent = 'Already signed up!';
         btn.style.background = 'var(--gold)';
-        showToast('You\'re already on the list!', 'success');
+        showToast('Welcome back! Your results are now unlocked.', 'success');
+        unlockGatedSections();
         setTimeout(function() { closeSignupModal(); btn.textContent = 'Sign Up for Free'; btn.style.background = ''; btn.disabled = false; }, 2500);
       } else {
         btn.textContent = 'Try again';
@@ -3620,6 +3630,15 @@ async function handleSignupSubmit(e) {
     showToast('Network error. Please try again.', 'error');
     setTimeout(function() { btn.textContent = 'Sign Up for Free'; btn.style.background = ''; btn.disabled = false; }, 2500);
   }
+}
+
+function unlockGatedSections() {
+  document.querySelectorAll('.gated-section').forEach(function(section) {
+    var content = section.querySelector('.gated-content');
+    var overlay = section.querySelector('.gated-overlay');
+    if (content) content.style.filter = 'none';
+    if (overlay) overlay.style.display = 'none';
+  });
 }
 
 // =============================================
@@ -3640,6 +3659,13 @@ function init() {
   updateInvoiceModalClientOptions();
   updateBadge();
   updateShieldMonitoring();
+
+  // Handle #new-client deep link from standalone risk check
+  if (window.location.hash === '#new-client') {
+    switchView('clients');
+    setTimeout(function() { openModal('client'); }, 300);
+    window.location.hash = '';
+  }
 }
 
 init();
