@@ -1545,10 +1545,10 @@ select.form-input { cursor: pointer; }
               </div>
               <div class="form-row">
                 <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" value="eddy@invoiceshield.com"></div>
-                <div class="form-group"><label class="form-label">Business Name</label><input type="text" class="form-input" value="Eddy M. Design"></div>
+                <div class="form-group"><label class="form-label">Business Name</label><input type="text" class="form-input" value="Eddy M. Consulting"></div>
               </div>
               <div class="form-row">
-                <div class="form-group full"><label class="form-label">Business Address</label><input type="text" class="form-input" value="123 Freelancer Way, San Francisco, CA 94102"></div>
+                <div class="form-group full"><label class="form-label">Business Address</label><input type="text" class="form-input" value="456 King Street West, Toronto, ON M5V 1K4"></div>
               </div>
             </div>
             <div class="settings-section">
@@ -1556,7 +1556,7 @@ select.form-input { cursor: pointer; }
               <div class="settings-section-desc">This appears at the bottom of all automated reminder emails.</div>
               <div class="form-group"><textarea class="form-input">Best regards,
 Eddy M.
-Eddy M. Design
+Eddy M. Consulting
 eddy@invoiceshield.com</textarea></div>
             </div>
             <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
@@ -1943,7 +1943,7 @@ eddy@invoiceshield.com</textarea></div>
       </button>
     </div>
     <div class="modal-body">
-      <p style="font-size:0.9rem;color:var(--charcoal-light);line-height:1.6">Upgrade to <strong>Shield Plan</strong> at <strong>$99/mo + 1.5% of recovered invoices</strong>? You'll get unlimited invoices, Jobber + Sage integrations, custom branding, dedicated account manager, and API access.</p>
+      <p style="font-size:0.9rem;color:var(--charcoal-light);line-height:1.6">Upgrade to <strong>Shield Plan</strong> at <strong>$99/mo + 1.5% of recovered invoices</strong>? You'll get unlimited invoices, FreshBooks + Xero integrations, custom branding, dedicated account manager, and API access.</p>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('upgrade')">Cancel</button>
@@ -1983,13 +1983,13 @@ const Store = {
   ],
 
   invoices: [
-    { id: 1, invNum: 'INV-1042', clientId: 1, amount: 3200, status: 'paid', issued: 'Mar 14', due: 'Mar 28', description: 'Brand identity design package including logo, color palette, and typography system.', lastAction: 'Payment received, Mar 28' },
+    { id: 1, invNum: 'INV-1042', clientId: 1, amount: 3200, status: 'paid', issued: 'Mar 14', due: 'Mar 28', description: 'Cloud infrastructure audit and migration planning for AWS environment.', lastAction: 'Payment received, Mar 28' },
     { id: 2, invNum: 'INV-1041', clientId: 2, amount: 1800, status: 'pending', issued: 'Mar 19', due: 'Apr 2', description: 'Website redesign consultation and wireframe delivery.', lastAction: 'Friendly nudge sent, Apr 3' },
     { id: 3, invNum: 'INV-1043', clientId: 8, amount: 7200, status: 'draft', issued: 'Apr 4', due: 'Apr 18', description: 'Full-stack development sprint for dashboard module.', lastAction: 'Draft created, Apr 4' },
-    { id: 4, invNum: 'INV-1036', clientId: 3, amount: 4500, status: 'overdue', issued: 'Mar 8', due: 'Mar 22', description: 'UI/UX design for mobile application, including 12 screens and interactive prototype.', lastAction: 'Final notice sent, Apr 4' },
+    { id: 4, invNum: 'INV-1036', clientId: 3, amount: 4500, status: 'overdue', issued: 'Mar 8', due: 'Mar 22', description: 'Custom CRM integration and Salesforce workflow automation for sales team.', lastAction: 'Final notice sent, Apr 4' },
     { id: 5, invNum: 'INV-1040', clientId: 4, amount: 2750, status: 'pending', issued: 'Mar 22', due: 'Apr 5', description: 'API integration and backend optimization services.', lastAction: 'Friendly nudge sent, Apr 6' },
-    { id: 6, invNum: 'INV-1039', clientId: 5, amount: 5400, status: 'paid', issued: 'Mar 16', due: 'Mar 30', description: 'Content strategy and copywriting for product launch campaign.', lastAction: 'Payment received, Mar 30' },
-    { id: 7, invNum: 'INV-1035', clientId: 6, amount: 2050, status: 'overdue', issued: 'Mar 4', due: 'Mar 18', description: 'Monthly retainer for design support and maintenance.', lastAction: 'Firm follow-up sent, Apr 1' },
+    { id: 6, invNum: 'INV-1039', clientId: 5, amount: 5400, status: 'paid', issued: 'Mar 16', due: 'Mar 30', description: 'DevOps consulting and CI/CD pipeline setup for microservices architecture.', lastAction: 'Payment received, Mar 30' },
+    { id: 7, invNum: 'INV-1035', clientId: 6, amount: 2050, status: 'overdue', issued: 'Mar 4', due: 'Mar 18', description: 'Monthly IT support retainer and systems maintenance.', lastAction: 'Firm follow-up sent, Apr 1' },
     { id: 8, invNum: 'INV-1044', clientId: 7, amount: 12000, status: 'sent', issued: 'Apr 3', due: 'Apr 17', description: 'Enterprise analytics dashboard design and development.', lastAction: 'Invoice sent, Apr 3' },
   ],
 
@@ -2487,7 +2487,7 @@ td{padding:14px 16px;font-size:0.9rem;border-bottom:1px solid #EDE6D8}
 .footer{margin-top:48px;padding-top:20px;border-top:1px solid #EDE6D8;font-size:0.75rem;color:#7A756E;text-align:center}
 </style></head><body>
 <div class="header">
-  <div><div class="brand">InvoiceShield</div><div class="brand-sub">Eddy M. Design<br>123 Freelancer Way, San Francisco, CA 94102<br>eddy@invoiceshield.com</div></div>
+  <div><div class="brand">InvoiceShield</div><div class="brand-sub">Eddy M. Consulting<br>456 King Street West, Toronto, ON M5V 1K4<br>eddy@invoiceshield.com</div></div>
   <div><div class="inv-title">INVOICE</div><div class="inv-num">${inv.invNum}</div></div>
 </div>
 <div class="meta">
