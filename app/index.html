@@ -2894,7 +2894,10 @@ function analyzeRisk() {
   const website = document.getElementById('risk-website').value.trim().toLowerCase();
   const amount = parseFloat(document.getElementById('risk-amount').value) || 0;
   const terms = parseInt(document.getElementById('risk-terms').value, 10) || 30;
-  const firstTime = document.getElementById('risk-firsttime').classList.contains('on');
+  const toggledFirstTime = document.getElementById('risk-firsttime').classList.contains('on');
+  // Auto-detect: if company is NOT in saved clients, treat as first-time regardless of toggle
+  const existingClient = Store.getClientByName(company);
+  const firstTime = existingClient ? toggledFirstTime : true;
 
   // Show loading
   document.getElementById('riskcheck-form').style.display = 'none';
