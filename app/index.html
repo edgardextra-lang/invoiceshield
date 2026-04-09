@@ -2886,6 +2886,49 @@ function updateShieldMonitoring() {
 // =============================================
 let lastRiskResult = null;
 
+// --- Domain verification helpers ---
+async function checkDNS(domain) {
+  // Google Public DNS JSON API - checks if domain has DNS records
+  try {
+    const res = await fetch('https://dns.google/resolve?name=' + encodeURIComponent(domain) + '&type=A');
+    const data = await res.json();
+    // Status 0 = NOERROR (domain exists), Answer present = has A records
+    return { exists: data.Status === 0 && Array.isArray(data.Answer) && data.Answer.length > 0, data: data };
+  } catch (e) {
+    return { exists: null, data: null }; // network error, inconclusive
+  }
+}
+
+async function checkDomainAge(domain) {
+  // Use RDAP (free, no API key) to get domain registration date
+  try {
+    const res = await fetch('https://rdap.org/domain/' + encodeURIComponent(domain));
+    if (!res.ok) return { age: null, registered: null };
+    const data = await res.json();
+    // Look for registration event
+    const regEvent = (data.events || []).find(e => e.eventAction === 'registration');
+    if (regEvent && regEvent.eventDate) {
+      const regDate = new Date(regEvent.eventDate);
+      const ageMonths = Math.floor((Date.now() - regDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+      return { age: ageMonths, registered: regEvent.eventDate.split('T')[0] };
+    }
+    return { age: null, registered: null };
+  } catch (e) {
+    return { age: null, registered: null };
+  }
+}
+
+async function checkEmailDomainMX(domain) {
+  // Check if email domain has MX records (can actually receive email)
+  try {
+    const res = await fetch('https://dns.google/resolve?name=' + encodeURIComponent(domain) + '&type=MX');
+    const data = await res.json();
+    return { hasMX: data.Status === 0 && Array.isArray(data.Answer) && data.Answer.length > 0 };
+  } catch (e) {
+    return { hasMX: null };
+  }
+}
+
 function analyzeRisk() {
   const company = document.getElementById('risk-company').value.trim();
   if (!company) { showToast('Please enter a company name', 'error'); return; }
@@ -2895,27 +2938,61 @@ function analyzeRisk() {
   const amount = parseFloat(document.getElementById('risk-amount').value) || 0;
   const terms = parseInt(document.getElementById('risk-terms').value, 10) || 30;
   const toggledFirstTime = document.getElementById('risk-firsttime').classList.contains('on');
-  // Auto-detect: if company is NOT in saved clients, treat as first-time regardless of toggle
   const existingClient = Store.getClientByName(company);
   const firstTime = existingClient ? toggledFirstTime : true;
 
   // Show loading
   document.getElementById('riskcheck-form').style.display = 'none';
   document.getElementById('riskcheck-loading').style.display = 'block';
+  document.querySelector('.risk-loading-text').textContent = 'Checking domain records...';
 
-  setTimeout(function() {
+  // Normalize domain from website input
+  const cleanDomain = website ? website.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0] : '';
+  const emailDomain = email ? (email.split('@')[1] || '') : '';
+
+  // Run real checks in parallel
+  const checks = [];
+  if (cleanDomain) {
+    checks.push(checkDNS(cleanDomain));
+    checks.push(checkDomainAge(cleanDomain));
+  } else {
+    checks.push(Promise.resolve({ exists: null }));
+    checks.push(Promise.resolve({ age: null, registered: null }));
+  }
+  if (emailDomain && !['gmail.com','yahoo.com','hotmail.com','outlook.com','aol.com','icloud.com','protonmail.com','mail.com'].includes(emailDomain)) {
+    checks.push(checkEmailDomainMX(emailDomain));
+  } else {
+    checks.push(Promise.resolve({ hasMX: null }));
+  }
+
+  Promise.all(checks).then(function(results) {
+    const dnsResult = results[0];
+    const domainAge = results[1];
+    const emailMX = results[2];
+
+    document.querySelector('.risk-loading-text').textContent = 'Calculating risk score...';
+
+    setTimeout(function() {
     // Calculate risk score (higher = riskier, 0-100)
     let score = 15; // base score
     const signals = [];
+    const freeProviders = ['gmail.com','yahoo.com','hotmail.com','outlook.com','aol.com','icloud.com','protonmail.com','mail.com'];
 
     // Email domain check
     if (email) {
-      const domain = email.split('@')[1] || '';
-      if (['gmail.com','yahoo.com','hotmail.com','outlook.com','aol.com'].includes(domain)) {
+      if (freeProviders.includes(emailDomain)) {
         score += 8;
-        signals.push({ text: 'Free email provider (' + domain + ') instead of company domain', severity: 'medium', pts: 8, color: 'var(--gold)' });
-      } else if (domain) {
-        signals.push({ text: 'Uses company email domain (' + domain + ')', severity: 'low', pts: 0, color: 'var(--sage)' });
+        signals.push({ text: 'Free email provider (' + emailDomain + ') instead of company domain', severity: 'medium', pts: 8, color: 'var(--gold)' });
+      } else if (emailDomain) {
+        // Check if email domain has MX records
+        if (emailMX.hasMX === true) {
+          signals.push({ text: 'Company email verified (' + emailDomain + ') — MX records found', severity: 'low', pts: 0, color: 'var(--sage)' });
+        } else if (emailMX.hasMX === false) {
+          score += 10;
+          signals.push({ text: 'Email domain (' + emailDomain + ') has no mail server (MX) records', severity: 'high', pts: 10, color: 'var(--red)' });
+        } else {
+          signals.push({ text: 'Company email domain (' + emailDomain + ') — could not verify MX', severity: 'low', pts: 0, color: 'var(--sage)' });
+        }
       }
     } else {
       score += 5;
@@ -2955,24 +3032,50 @@ function analyzeRisk() {
       signals.push({ text: 'Short payment terms (Net ' + terms + ') reduce risk', severity: 'low', pts: 0, color: 'var(--sage)' });
     }
 
-    // Website check
+    // Website / Domain check — now REAL
     if (!website) {
       score += 10;
       signals.push({ text: 'No website or domain provided for verification', severity: 'high', pts: 10, color: 'var(--red)' });
+    } else if (dnsResult.exists === true) {
+      // Domain resolves — check age
+      if (domainAge.age !== null && domainAge.age < 12) {
+        score += 8;
+        signals.push({ text: 'Domain ' + cleanDomain + ' is only ' + domainAge.age + ' months old (registered ' + domainAge.registered + ')', severity: 'high', pts: 8, color: 'var(--red)' });
+      } else if (domainAge.age !== null && domainAge.age < 24) {
+        score += 4;
+        signals.push({ text: 'Domain ' + cleanDomain + ' is ' + domainAge.age + ' months old (registered ' + domainAge.registered + ')', severity: 'medium', pts: 4, color: 'var(--gold)' });
+      } else if (domainAge.age !== null) {
+        score -= 3;
+        signals.push({ text: 'Domain ' + cleanDomain + ' is established (' + Math.floor(domainAge.age / 12) + '+ years, since ' + domainAge.registered + ')', severity: 'low', pts: -3, color: 'var(--sage)' });
+      } else {
+        signals.push({ text: 'Domain ' + cleanDomain + ' resolves (DNS verified)', severity: 'low', pts: 0, color: 'var(--sage)' });
+      }
+    } else if (dnsResult.exists === false) {
+      score += 12;
+      signals.push({ text: 'Domain ' + cleanDomain + ' does NOT resolve — no DNS records found', severity: 'high', pts: 12, color: 'var(--red)' });
     } else {
-      signals.push({ text: 'Business website provided (' + website + ')', severity: 'low', pts: 0, color: 'var(--sage)' });
+      // Could not check (network issue)
+      signals.push({ text: 'Domain ' + cleanDomain + ' provided (could not verify DNS)', severity: 'low', pts: 0, color: 'var(--sage)' });
     }
 
-    // Random variance
-    const variance = Math.floor(Math.random() * 11) - 5;
-    score += variance;
+    // Email-website mismatch check
+    if (email && cleanDomain && emailDomain && !freeProviders.includes(emailDomain)) {
+      if (emailDomain !== cleanDomain && !emailDomain.endsWith('.' + cleanDomain) && !cleanDomain.endsWith('.' + emailDomain)) {
+        score += 5;
+        signals.push({ text: 'Email domain (' + emailDomain + ') does not match website (' + cleanDomain + ')', severity: 'medium', pts: 5, color: 'var(--gold)' });
+      } else {
+        signals.push({ text: 'Email domain matches website domain', severity: 'low', pts: 0, color: 'var(--sage)' });
+      }
+    }
 
     // Clamp score
     score = Math.max(0, Math.min(100, score));
 
-    // Category scores
-    const legitimacy = Math.max(0, Math.min(30, Math.round(30 - ((!website ? 10 : 0) + (email && ['gmail.com','yahoo.com','hotmail.com','outlook.com','aol.com'].includes(email.split('@')[1]) ? 5 : 0)) * 30/20)));
-    const footprint = Math.max(0, Math.min(20, Math.round(20 - ((!website ? 8 : 0) + (!email ? 5 : 0)) * 20/13)));
+    // Category scores — updated with real domain data
+    const domainRiskPts = (!website ? 10 : dnsResult.exists === false ? 12 : (domainAge.age !== null && domainAge.age < 12) ? 8 : 0);
+    const emailRiskPts = (!email ? 5 : freeProviders.includes(emailDomain) ? 5 : emailMX.hasMX === false ? 8 : 0);
+    const legitimacy = Math.max(0, Math.min(30, Math.round(30 - (domainRiskPts + emailRiskPts) * 30/20)));
+    const footprint = Math.max(0, Math.min(20, Math.round(20 - ((!website ? 8 : dnsResult.exists === false ? 10 : 0) + (!email ? 5 : 0)) * 20/13)));
     const paymentRisk = Math.max(0, Math.min(30, Math.round(30 - ((terms >= 60 ? 10 : terms >= 45 ? 8 : terms >= 30 ? 4 : 0) + (firstTime ? 5 : 0)) * 30/15)));
     const invoiceContext = Math.max(0, Math.min(20, Math.round(20 - (amount > 10000 ? 10 : amount > 5000 ? 5 : 0) * 20/10)));
 
@@ -3011,7 +3114,13 @@ function analyzeRisk() {
     // Show report
     document.getElementById('riskcheck-loading').style.display = 'none';
     document.getElementById('riskcheck-report').style.display = 'block';
-  }, 2000);
+    }, 800);
+  }).catch(function(err) {
+    console.error('Risk check error:', err);
+    document.getElementById('riskcheck-loading').style.display = 'none';
+    document.getElementById('riskcheck-form').style.display = 'block';
+    showToast('Error running risk check. Please try again.', 'error');
+  });
 }
 
 function renderRiskReport(r) {
