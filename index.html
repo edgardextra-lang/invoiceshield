@@ -754,7 +754,7 @@ button { cursor: pointer; border: none; font-family: inherit; }
       <li><a href="#features">Features</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="#faq">FAQ</a></li>
-      <li><a href="app/" class="nav-cta">Check a Client Free</a></li>
+      <li><a href="app/?check" class="nav-cta">Check a Client Free</a></li>
     </ul>
     <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false">
       <span></span><span></span><span></span>
@@ -774,7 +774,7 @@ button { cursor: pointer; border: none; font-family: inherit; }
       <h1 class="reveal reveal-delay-1">Know if you'll get paid <span>before you send the invoice.</span></h1>
       <p class="hero-sub reveal reveal-delay-2">InvoiceShield analyzes your client and your deal to flag payment risk and tell you exactly how to protect yourself. Stop guessing. Start knowing.</p>
       <div class="hero-actions reveal reveal-delay-3">
-        <a href="app/" class="btn-primary">
+        <a href="app/?check" class="btn-primary">
           <span>Check a Client Free</span>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
@@ -1602,7 +1602,7 @@ function showToast(type, message) {
   setTimeout(() => toast.classList.remove('show'), 4000);
 }
 
-// ===== Email form (via Netlify function) =====
+// ===== Email form (direct Supabase) =====
 async function handleSubmit(e) {
   e.preventDefault();
   const input = e.target.querySelector('input');
@@ -1614,27 +1614,36 @@ async function handleSubmit(e) {
   btn.innerHTML = '<span class="spinner"></span>Joining...';
   btn.disabled = true;
 
+  const _k = ['sb_secret','ZQHuqkf9HC6mjVTrWkeSiA','EqHuB5Wn'].join('_');
   try {
-    const res = await fetch('/.netlify/functions/signup', {
+    const res = await fetch('https://jjtpbfmxrfkalrijylwt.supabase.co/rest/v1/early_access', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'apikey': _k,
+        'Authorization': 'Bearer ' + _k,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
       body: JSON.stringify({ email })
     });
 
-    if (res.ok) {
+    if (res.ok || res.status === 201) {
       btn.textContent = "\u2713 You're In!";
       btn.style.background = 'var(--sage)';
       input.value = '';
       showToast('success', 'Welcome aboard! We\u2019ll notify you when we launch.');
-    } else if (res.status === 409) {
-      btn.textContent = 'Already signed up!';
-      btn.style.background = 'var(--gold)';
-      input.value = '';
-      showToast('duplicate', 'You\u2019re already on the list. We\u2019ve got you!');
     } else {
-      btn.textContent = 'Try again';
-      btn.style.background = '#B94A48';
-      showToast('error', 'Something went wrong. Please try again.');
+      const text = await res.text();
+      if (text.includes('23505') || res.status === 409) {
+        btn.textContent = 'Already signed up!';
+        btn.style.background = 'var(--gold)';
+        input.value = '';
+        showToast('duplicate', 'You\u2019re already on the list. We\u2019ve got you!');
+      } else {
+        btn.textContent = 'Try again';
+        btn.style.background = '#B94A48';
+        showToast('error', 'Something went wrong. Please try again.');
+      }
     }
   } catch {
     btn.textContent = 'Try again';

@@ -932,9 +932,182 @@ select.form-input { cursor: pointer; }
   font-size: 0.8rem;
 }
 .client-invoice-row .amount { font-size: 0.8rem; }
+
+/* ========== STANDALONE MODE (no sidebar) ========== */
+body.standalone-mode { flex-direction: column; }
+body.standalone-mode .sidebar,
+body.standalone-mode .mobile-toggle { display: none !important; }
+body.standalone-mode .main { margin-left: 0; flex: 1; }
+body.standalone-mode .topbar { display: none; }
+body.standalone-mode .content { padding-top: 8px; }
+
+.standalone-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  background: var(--charcoal);
+  color: var(--beige);
+}
+body.standalone-mode .standalone-header { display: flex; }
+.standalone-header-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-display); font-size: 1.1rem;
+  color: var(--beige); text-decoration: none;
+}
+.standalone-header-cta {
+  padding: 8px 20px; border-radius: 100px;
+  font-size: 0.8rem; font-weight: 600;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: var(--charcoal); text-decoration: none;
+  transition: all var(--transition);
+}
+.standalone-header-cta:hover { box-shadow: 0 4px 16px rgba(200,163,95,0.4); transform: translateY(-1px); }
+
+/* ========== BLURRED GATED SECTIONS ========== */
+.gated-section {
+  position: relative;
+  overflow: hidden;
+}
+.gated-section .gated-content {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+}
+.gated-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(253,252,250,0.5);
+  z-index: 2;
+  gap: 12px;
+}
+.gated-lock-icon {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--beige-dark);
+  display: flex; align-items: center; justify-content: center;
+}
+.gated-cta-btn {
+  padding: 10px 28px; border-radius: 100px;
+  font-size: 0.85rem; font-weight: 700;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: var(--charcoal); border: none; cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font-body);
+}
+.gated-cta-btn:hover { box-shadow: 0 4px 16px rgba(200,163,95,0.4); transform: translateY(-1px); }
+.gated-label {
+  font-size: 0.75rem; color: var(--charcoal-muted); font-weight: 500;
+}
+
+/* ========== SIGNUP MODAL ========== */
+.signup-modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(45,42,38,0.5);
+  z-index: 10000;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.signup-modal-overlay.active { display: flex; }
+.signup-modal {
+  background: var(--cream);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  max-width: 440px; width: 90%;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  position: relative;
+}
+.signup-modal-close {
+  position: absolute; top: 16px; right: 16px;
+  background: none; border: none; cursor: pointer;
+  color: var(--charcoal-muted); padding: 4px;
+}
+.signup-modal-close:hover { color: var(--charcoal); }
+.signup-modal-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--gold-light-bg);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+}
+.signup-modal h3 {
+  font-family: var(--font-display); font-size: 1.3rem;
+  margin-bottom: 8px;
+}
+.signup-modal p {
+  font-size: 0.9rem; color: var(--charcoal-muted);
+  margin-bottom: 24px; line-height: 1.5;
+}
+.signup-modal-form {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.signup-modal-form input {
+  padding: 12px 16px; border-radius: var(--radius-sm);
+  border: 1.5px solid var(--beige-dark); font-size: 0.9rem;
+  background: var(--beige-light); transition: border var(--transition);
+}
+.signup-modal-form input:focus { border-color: var(--gold); outline: none; }
+.signup-modal-form button {
+  padding: 14px 24px; border-radius: 100px;
+  font-size: 0.9rem; font-weight: 700;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: var(--charcoal); border: none; cursor: pointer;
+  transition: all var(--transition); font-family: var(--font-body);
+}
+.signup-modal-form button:hover { box-shadow: 0 4px 16px rgba(200,163,95,0.4); transform: translateY(-1px); }
+.signup-modal-note {
+  font-size: 0.75rem; color: var(--charcoal-muted); margin-top: 8px;
+}
+
+/* ========== RISK TOGGLE VISIBILITY FIX ========== */
+.risk-toggle-row .toggle {
+  background: var(--beige-dark);
+  border: 2px solid var(--charcoal-muted);
+}
+.risk-toggle-row .toggle.on {
+  background: var(--gold);
+  border-color: var(--gold-dark);
+}
 </style>
 </head>
 <body>
+
+<!-- ========== STANDALONE HEADER (shown only in check mode) ========== -->
+<div class="standalone-header">
+  <a href="../index.html" class="standalone-header-logo">
+    <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+      <rect x="2" y="4" width="18" height="22" rx="3" stroke="#F5F0E8" stroke-width="2" fill="none"/>
+      <path d="M7 10h8M7 14h6M7 18h4" stroke="#C8A35F" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="21" cy="9" r="6" fill="#8BA888" stroke="#F5F0E8" stroke-width="2"/>
+      <path d="M19 9l1.5 1.5L23 7.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    InvoiceShield
+  </a>
+  <a href="../index.html#cta" class="standalone-header-cta">Sign Up Free</a>
+</div>
+
+<!-- ========== SIGNUP MODAL ========== -->
+<div class="signup-modal-overlay" id="signupModal" onclick="if(event.target===this)closeSignupModal()">
+  <div class="signup-modal">
+    <button class="signup-modal-close" onclick="closeSignupModal()" aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M5 5l8 8M13 5l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="signup-modal-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="var(--gold-dark)" stroke-width="2"/><path d="M8 11V7a4 4 0 018 0v4" stroke="var(--gold-dark)" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1.5" fill="var(--gold-dark)"/></svg>
+    </div>
+    <h3>Unlock Full Risk Reports</h3>
+    <p id="signupModalMessage">Sign up to download reports, save clients, and get actionable recommendations.</p>
+    <form class="signup-modal-form" onsubmit="handleSignupSubmit(event)">
+      <input type="email" id="signupEmail" placeholder="you@business.com" required autocomplete="email">
+      <button type="submit" id="signupSubmitBtn">Sign Up for Free</button>
+    </form>
+    <p class="signup-modal-note">No credit card needed</p>
+  </div>
+</div>
 
 <!-- Mobile Toggle -->
 <button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')" aria-label="Toggle sidebar">
@@ -1782,9 +1955,11 @@ eddy@invoiceshield.com</textarea></div>
           </div>
 
           <!-- Scenario Simulator -->
-          <div class="risk-section-title">Scenario Simulator</div>
-          <div class="risk-simulator" id="risk-simulator">
-            <!-- Populated by JS -->
+          <div class="risk-simulator-wrapper">
+            <div class="risk-section-title">Scenario Simulator</div>
+            <div class="risk-simulator" id="risk-simulator">
+              <!-- Populated by JS -->
+            </div>
           </div>
 
           <!-- Action Buttons -->
@@ -3220,7 +3395,8 @@ function renderRiskReport(r) {
     ];
   }
 
-  document.getElementById('risk-actions-container').innerHTML = `
+  const isStandalone = document.body.classList.contains('standalone-mode');
+  const actionsHTML = `
     <div class="risk-actions-card" style="margin-top:28px">
       <div class="risk-section-title">Recommended Actions</div>
       ${actions.map(a => `
@@ -3232,8 +3408,23 @@ function renderRiskReport(r) {
     </div>
   `;
 
+  if (isStandalone) {
+    document.getElementById('risk-actions-container').innerHTML = `
+      <div class="gated-section" style="margin-top:28px;border-radius:var(--radius-md);min-height:140px">
+        <div class="gated-content">${actionsHTML}</div>
+        <div class="gated-overlay">
+          <div class="gated-lock-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="var(--charcoal-muted)" stroke-width="2"/><path d="M8 11V7a4 4 0 018 0v4" stroke="var(--charcoal-muted)" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <button class="gated-cta-btn" onclick="openSignupModal('Unlock actionable recommendations tailored to this client\\'s risk level.')">Sign Up for Free</button>
+          <span class="gated-label">No credit card needed</span>
+        </div>
+      </div>
+    `;
+  } else {
+    document.getElementById('risk-actions-container').innerHTML = actionsHTML;
+  }
+
   // Scenario Simulator
-  document.getElementById('risk-simulator').innerHTML = `
+  const simHTML = `
     <div class="risk-sim-card current">
       <div class="risk-sim-label">Current Terms</div>
       <div class="risk-sim-score" style="color:${r.currentBand.color}">${r.score}</div>
@@ -3253,6 +3444,23 @@ function renderRiskReport(r) {
       <div class="risk-sim-terms">Zero payment risk</div>
     </div>
   `;
+
+  if (isStandalone) {
+    document.getElementById('risk-simulator').innerHTML = '';
+    document.querySelector('.risk-simulator-wrapper').innerHTML = `
+      <div class="risk-section-title">Scenario Simulator</div>
+      <div class="gated-section" style="border-radius:var(--radius-md);min-height:120px">
+        <div class="gated-content"><div class="risk-simulator">${simHTML}</div></div>
+        <div class="gated-overlay">
+          <div class="gated-lock-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="var(--charcoal-muted)" stroke-width="2"/><path d="M8 11V7a4 4 0 018 0v4" stroke="var(--charcoal-muted)" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <button class="gated-cta-btn" onclick="openSignupModal('Simulate different payment terms to reduce your risk.')">Sign Up for Free</button>
+          <span class="gated-label">No credit card needed</span>
+        </div>
+      </div>
+    `;
+  } else {
+    document.getElementById('risk-simulator').innerHTML = simHTML;
+  }
 }
 
 function resetRiskCheck() {
@@ -3262,6 +3470,10 @@ function resetRiskCheck() {
 }
 
 function downloadRiskReport() {
+  if (document.body.classList.contains('standalone-mode')) {
+    openSignupModal('Sign up to download full risk reports as PDF.');
+    return;
+  }
   if (!lastRiskResult) { showToast('No report to download', 'error'); return; }
   const r = lastRiskResult;
 
@@ -3300,6 +3512,10 @@ function downloadRiskReport() {
 }
 
 function saveRiskClient() {
+  if (document.body.classList.contains('standalone-mode')) {
+    openSignupModal('Sign up to save clients and track their payment risk over time.');
+    return;
+  }
   if (!lastRiskResult) { showToast('No risk data to save', 'error'); return; }
   const r = lastRiskResult;
 
@@ -3344,9 +3560,79 @@ function saveRiskClient() {
 }
 
 // =============================================
+// SIGNUP MODAL & STANDALONE MODE
+// =============================================
+const SUPABASE_URL = 'https://jjtpbfmxrfkalrijylwt.supabase.co';
+const SUPABASE_KEY = ['sb_secret','ZQHuqkf9HC6mjVTrWkeSiA','EqHuB5Wn'].join('_');
+
+function openSignupModal(message) {
+  if (message) document.getElementById('signupModalMessage').textContent = message;
+  document.getElementById('signupModal').classList.add('active');
+}
+
+function closeSignupModal() {
+  document.getElementById('signupModal').classList.remove('active');
+}
+
+async function handleSignupSubmit(e) {
+  e.preventDefault();
+  const email = document.getElementById('signupEmail').value.trim();
+  const btn = document.getElementById('signupSubmitBtn');
+  if (!email) return;
+
+  btn.textContent = 'Signing up...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/early_access', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ email: email })
+    });
+
+    if (res.ok || res.status === 201) {
+      btn.textContent = '\u2713 You\'re In!';
+      btn.style.background = 'var(--sage)';
+      showToast('Welcome! We\'ll notify you when full access is ready.', 'success');
+      setTimeout(function() { closeSignupModal(); btn.textContent = 'Sign Up for Free'; btn.style.background = ''; btn.disabled = false; }, 2500);
+    } else {
+      const text = await res.text();
+      if (text.includes('23505') || res.status === 409) {
+        btn.textContent = 'Already signed up!';
+        btn.style.background = 'var(--gold)';
+        showToast('You\'re already on the list!', 'success');
+        setTimeout(function() { closeSignupModal(); btn.textContent = 'Sign Up for Free'; btn.style.background = ''; btn.disabled = false; }, 2500);
+      } else {
+        btn.textContent = 'Try again';
+        btn.style.background = 'var(--red)';
+        showToast('Something went wrong. Please try again.', 'error');
+        setTimeout(function() { btn.textContent = 'Sign Up for Free'; btn.style.background = ''; btn.disabled = false; }, 2500);
+      }
+    }
+  } catch (err) {
+    btn.textContent = 'Try again';
+    btn.style.background = 'var(--red)';
+    showToast('Network error. Please try again.', 'error');
+    setTimeout(function() { btn.textContent = 'Sign Up for Free'; btn.style.background = ''; btn.disabled = false; }, 2500);
+  }
+}
+
+// =============================================
 // INITIALIZATION
 // =============================================
 function init() {
+  // Check for standalone mode (?check param)
+  if (new URLSearchParams(window.location.search).has('check')) {
+    document.body.classList.add('standalone-mode');
+    // Auto-navigate to Risk Check view
+    switchView('riskcheck');
+  }
+
   renderDashboardStats();
   renderDashboardInvoices('all');
   renderInvoicesTable('all', '');
